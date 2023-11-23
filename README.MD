@@ -101,4 +101,12 @@ if err != nil {
     return
 }
 
-repositoryTopicsMap, err := githubfilter.FilterAndGetRepositoryTopicsAndLatestReleaseTags(ctx,
+repositoryTopicsMap, err := githubfilter.FilterAndGetRepositoryTopicsAndLatestReleaseTags(ctx, client, `"my-org/.*"`, repos)
+if err != nil {
+    fmt.Println(err)
+    return
+}
+
+for repoName, topicsAndTag := range repositoryTopicsMap {
+    fmt.Println(repoName, ":", topicsAndTag)
+}

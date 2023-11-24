@@ -110,3 +110,31 @@ if err != nil {
 for repoName, topicsAndTag := range repositoryTopicsMap {
     fmt.Println(repoName, ":", topicsAndTag)
 }
+
+
+### Submit file
+
+
+```
+
+// SubmitJSONToGitHubRepository submits the generated JSON file to another GitHub repository.
+func SubmitJSONToGitHubRepository(ctx context.Context, client *github.Client, repositoryName string, owner string, branch string, filePath string) error {
+    jsonBytes, err := json.Marshal(repositoryTopicsMap)
+    if err != nil {
+        return err
+    }
+
+    jsonFile, err := ioutil.TempFile("", "repositoryTopicsMap.json")
+    if err != nil {
+        return err
+    }
+
+    defer jsonFile.Close()
+
+    _, err = jsonFile.Write(jsonBytes)
+    if err != nil {
+        return err
+    }
+
+    _, _, err := client.Repositories.CreateFile(ctx, owner, repositoryName, jsonFile.
+```

@@ -138,3 +138,39 @@ func SubmitJSONToGitHubRepository(ctx context.Context, client *github.Client, re
 
     _, _, err := client.Repositories.CreateFile(ctx, owner, repositoryName, jsonFile.
 ```
+
+```
+// CheckForDifferences checks for differences between local and remote JSON files. It returns a boolean indicating whether there are any differences and a map of any differences found.
+func CheckForDifferences(ctx context.Context, client *github.Client, filePath string, owner string, repositoryName string, branch string) (bool, map[string]string, error) {
+    localJSONMap, err := LoadJSONFromFile(filePath)
+    if err != nil {
+        return false, nil, err
+    }
+
+    remoteFileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repositoryName, filePath, &github.RepositoryContentOptions{Ref: branch})
+    if err != nil {
+        if err == github.NotFound {
+            // Remote file does not exist, so there are differences
+            return true, localJSONMap, nil
+        }
+        return false, nil, err
+    }
+
+    remoteJSONString := string(remoteFileContent.GetContent())
+    var remoteJSONMap map[string]string
+    err = json.Unmarshal([]byte(remoteJSONString), &remoteJSONMap)
+    if err != nil {
+        return false, nil, err
+    }
+
+    differences := make(map[string]string)
+    for key, localValue := range localJSONMap {
+        remoteValue, ok := remoteJSONMap[key]
+        if !ok || localValue != remoteValue {
+            differences[key] = localValue
+        }
+    }
+
+    return len(differences) > 0, differences, nil
+}
+```

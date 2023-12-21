@@ -186,13 +186,14 @@ import (
 
 	cloudresourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"google.golang.org/api/option"
+	crmv1 "google.golang.org/api/cloudresourcemanager/v1"
 )
 
 func getProjectOrganization(projectID string) (string, error) {
 	ctx := context.Background()
 
-	// Create a CRM client with explicit version setting for clarity
-	crmService, err := cloudresourcemanager.NewService(ctx, option.WithEndpoint("cloudresourcemanager.googleapis.com:443"))
+	// Create a CRM client using the appropriate method
+	crmService, err := crmv1.NewService(ctx, option.WithCredentialsFile("path/to/credentials.json"))
 	if err != nil {
 		return "", fmt.Errorf("creating cloudresourcemanager client: %w", err)
 	}

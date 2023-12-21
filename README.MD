@@ -176,7 +176,8 @@ func CheckForDifferences(ctx context.Context, client *github.Client, filePath st
 ```
 
 #### GO FUNCTION FOR ORG POLICIES
-```
+
+```go
 package main
 
 import (
@@ -218,4 +219,5 @@ func main() {
 		fmt.Println("Project organization:", organizationID)
 	}
 }
+
 ```

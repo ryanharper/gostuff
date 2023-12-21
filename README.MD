@@ -174,3 +174,48 @@ func CheckForDifferences(ctx context.Context, client *github.Client, filePath st
     return len(differences) > 0, differences, nil
 }
 ```
+
+#### GO FUNCTION FOR ORG POLICIES
+```
+package main
+
+import (
+	"context"
+	"fmt"
+
+	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+)
+
+func getProjectOrganization(projectID string) (string, error) {
+	ctx := context.Background()
+	crmService, err := cloudresourcemanager.NewService(ctx)
+	if err != nil {
+		return "", fmt.Errorf("creating cloudresourcemanager client: %w", err)
+	}
+
+	project, err := crmService.Projects.GetAncestry(projectID).Do()
+	if err != nil {
+		return "", fmt.Errorf("getting project ancestry: %w", err)
+	}
+
+	// The organization ID is in the parent chain of the project.
+	for _, parentNode := range project.Ancestor {
+		if parentNode.Type == "organization" {
+			return parentNode.Id, nil
+		}
+	}
+
+	// If no organization is found, return an error.
+	return "", fmt.Errorf("project %s is not part of an organization", projectID)
+}
+
+func main() {
+	projectID := "your-project-id"
+	organizationID, err := getProjectOrganization(projectID)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Project organization:", organizationID)
+	}
+}
+```

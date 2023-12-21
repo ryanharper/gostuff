@@ -184,12 +184,15 @@ import (
 	"context"
 	"fmt"
 
-	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	cloudresourcemanager "cloud.google.com/go/resourcemanager/apiv3"
+	"google.golang.org/api/option"
 )
 
 func getProjectOrganization(projectID string) (string, error) {
 	ctx := context.Background()
-	crmService, err := cloudresourcemanager.NewService(ctx)
+
+	// Create a CRM client with explicit version setting for clarity
+	crmService, err := cloudresourcemanager.NewService(ctx, option.WithEndpoint("cloudresourcemanager.googleapis.com:443"))
 	if err != nil {
 		return "", fmt.Errorf("creating cloudresourcemanager client: %w", err)
 	}
@@ -201,8 +204,8 @@ func getProjectOrganization(projectID string) (string, error) {
 
 	// The organization ID is in the parent chain of the project.
 	for _, parentNode := range project.Ancestor {
-		if parentNode.Type == "organization" {
-			return parentNode.Id, nil
+		if parentNode.Type == "ORGANIZATION" {
+			return parentNode.ResourceId.Id(), nil
 		}
 	}
 
@@ -219,5 +222,4 @@ func main() {
 		fmt.Println("Project organization:", organizationID)
 	}
 }
-
 ```

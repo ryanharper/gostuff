@@ -224,3 +224,66 @@ func main() {
 	}
 }
 ```
+
+another one 
+
+```go
+
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    orgpolicy "cloud.google.com/go/orgpolicy/apiv1"
+    "google.golang.org/api/iterator"
+)
+
+func listOrganizationPolicies(projectID string) ([]*orgpolicy.Policy, error) {
+    ctx := context.Background()
+    client, err := orgpolicy.NewClient(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("orgpolicy.NewClient: %v", err)
+    }
+
+    defer client.Close()
+
+    req := &orgpolicy.ListPoliciesRequest{
+        Parent: fmt.Sprintf("projects/%s", projectID),
+    }
+
+    // Iterate through policies returned by the API
+    policies := []*orgpolicy.Policy{}
+    it := client.ListPolicies(ctx, req)
+    for {
+        policy, err := it.Next()
+        if err == iterator.Done {
+            break
+        }
+        if err != nil {
+            return nil, fmt.Errorf("ListPolicies: %v", err)
+        }
+        policies = append(policies, policy)
+    }
+
+    return policies, nil
+}
+
+func main() {
+    projectID := "your-project-id"  // Replace with your actual project ID
+
+    policies, err := listOrganizationPolicies(projectID)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for _, policy := range policies {
+        fmt.Printf("Policy: %s\n", policy.Name)
+        fmt.Printf("  Constraints: %v\n", policy.Spec)
+        fmt.Println()
+    }
+}
+
+
+```

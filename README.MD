@@ -390,9 +390,60 @@ func main() {
     for _, policy := range policies {
         fmt.Printf("Policy: %s\n", policy.Name)
         fmt.Printf("  Constraints: %v\n", policy.Spec)
+        fmt.package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    "cloud.google.com/go/compute/apiv1"
+)
+
+func listDisks(projectID string) ([]*compute.Disk, error) {
+    ctx := context.Background()
+    client, err := compute.NewDisksClient(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("compute.NewDisksClient: %v", err)
+    }
+    defer client.Close()
+
+    req := &compute.DiskListRequest{
+        Project: projectID,
+    }
+
+    it := client.List(ctx, req)
+    allDisks := []*compute.Disk{}
+    for {
+        resp, err := it.Next()
+        if err == iterator.Done {
+            break
+        }
+        if err != nil {
+            return nil, fmt.Errorf("List: %v", err)
+        }
+        allDisks = append(allDisks, resp)
+    }
+
+    return allDisks, nil
+}
+
+func main() {
+    projectID := "your-project-id"  // Replace with your actual project ID
+
+    disks, err := listDisks(projectID)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for _, disk := range disks {
+        fmt.Printf("Disk: %s\n", disk.Name)
+        fmt.Printf("  Zone: %s\n", disk.Zone)
+        fmt.Printf("  Size: %d GB\n", disk.SizeGb)
         fmt.Println()
     }
 }
+
 
 
 

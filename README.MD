@@ -333,9 +333,67 @@ func main() {
     for _, policy := range policies {
         fmt.Printf("Policy: %s\n", policy.Name)
         fmt.Printf("  Constraints: %v\n", policy.Spec)
+        fmt.package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    "cloud.google.com/go/resourcemanager/apiv3"
+)
+
+func listOrganizationPolicies(projectID string) ([]*resourcemanager.OrgPolicy, error) {
+    ctx := context.Background()
+
+    // Create a client for the Cloud Resource Manager API
+    client, err := resourcemanager.NewProjectsClient(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("resourcemanager.NewProjectsClient: %v", err)
+    }
+    defer client.Close()
+
+    // Get the parent resource for organization policies
+    parentResource := fmt.Sprintf("projects/%s", projectID)
+
+    // Iterate through all available constraints to retrieve policies
+    policies := []*resourcemanager.OrgPolicy{}
+    constraints := []string{
+        "constraints/compute.trustedImageProjects", // Example constraint
+        // Add other constraints as needed
+    }
+
+    for _, constraint := range constraints {
+        req := &resourcemanager.GetOrgPolicyRequest{
+            Constraint: constraint,
+            Resource:   parentResource,
+        }
+
+        policy, err := client.GetOrgPolicy(ctx, req)
+        if err != nil {
+            return nil, fmt.Errorf("GetOrgPolicy: %v", err)
+        }
+        policies = append(policies, policy)
+    }
+
+    return policies, nil
+}
+
+func main() {
+    projectID := "your-project-id"  // Replace with your actual project ID
+
+    policies, err := listOrganizationPolicies(projectID)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for _, policy := range policies {
+        fmt.Printf("Policy: %s\n", policy.Name)
+        fmt.Printf("  Constraints: %v\n", policy.Spec)
         fmt.Println()
     }
 }
+
 
 
 

@@ -1,6 +1,56 @@
 Sure, here is the expanded code with an additional function that iterates over the filtered repositories, retrieves all the GitHub topics associated with each repository, and stores them in a map with the repository name as the key and the latest tag associated with that repository as the value:
 
 ```go
+Bash
+PUT /subscription_lookup  
+{
+  "mappings": {
+    "properties": {
+      "resource_id": { 
+        "type": "keyword" 
+      },
+      "subscription_name": { 
+        "type": "text" 
+      }
+    }
+  }
+}
+
+{
+  "mappings": {
+    "properties": {
+      "resource_id": { 
+        "type": "keyword" 
+      },
+      "subscription_name": { 
+        "type": "text" 
+      }
+    }
+  }
+}
+
+PUT _ingest/pipeline/azure_subscription_enrich_pipeline
+{
+  "description": "Enriches Azure documents with subscription name",
+  "processors": [
+    {
+      "enrich": {
+        "policy_name": "azure_subscription_enrich_policy",
+        "field": "azure_resource_id",
+        "target_field": "subscription_name"
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
 package githubfilter
 
 import (

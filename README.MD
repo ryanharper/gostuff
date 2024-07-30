@@ -1,6 +1,22 @@
 Sure, here is the expanded code with an additional function that iterates over the filtered repositories, retrieves all the GitHub topics associated with each repository, and stores them in a map with the repository name as the key and the latest tag associated with that repository as the value:
 
 ```go
+processors:
+  # Parse JSON-formatted logs first
+  parse_json:
+    field: body
+    target_key: attributes
+  # Then redact sensitive data
+  transform:
+    transforms:
+    - type: regex
+      error_mode: ignore
+      regex:
+        field: attributes.message
+        pattern: "(?i)(password|secret|token)=(\\S+)"
+        replacement: "$1=***"
+
+
 Bash
 PUT /subscription_lookup  
 {

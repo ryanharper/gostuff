@@ -1,4 +1,43 @@
 Sure, here is the expanded code with an additional function that iterates over the filtered repositories, retrieves all the GitHub topics associated with each repository, and stores them in a map with the repository name as the key and the latest tag associated with that repository as the value:
+
+```
+package test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/gruntwork-io/terratest/modules/helm"
+	"github.com/gruntwork-io/terratest/modules/k8s"
+	"github.com/stretchr/testify/require"   
+
+)
+
+func TestOTelCollectorDeployment(t *testing.T) {
+	t.Parallel()
+
+	// Path to your Helm chart
+	helmChartPath := "../path/to/your/otel-collector-chart"
+
+	// Helm install options
+	options := &helm.Options{
+		SetValues: map[string]string{
+			// Any configuration values for your chart
+		},
+	}
+
+	// Install the Helm chart
+	helm.Install(t, options, helmChartPath, "my-otel-collector")
+
+	// Wait for the service to be up and running
+	k8s.WaitUntilServiceAvailable(t, "my-otel-collector", 10, 1*time.Minute)
+
+	// Optionally, you can add more assertions here to check specific aspects of the deployment
+
+	// No teardown in this test, as requested
+}
+```
+
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

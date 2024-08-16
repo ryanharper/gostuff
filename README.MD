@@ -1,4 +1,20 @@
 Sure, here is the expanded code with an additional function that iterates over the filtered repositories, retrieves all the GitHub topics associated with each repository, and stores them in a map with the repository name as the key and the latest tag associated with that repository as the value:
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+secretGenerator:
+- name: my-secret
+  envs:
+  - secret.env # A file containing the Secret Manager reference
+  options:
+    disableNameSuffixHash: true
+```
+
+```
+my-secret-key=sm://projects/[PROJECT_ID]/secrets/[SECRET_NAME]/versions/[VERSION]
+```
+
 
 ```go
 transform:

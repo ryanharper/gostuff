@@ -1,6 +1,27 @@
 Sure, here is the expanded code with an additional function that iterates over the filtered repositories, retrieves all the GitHub topics associated with each repository, and stores them in a map with the repository name as the key and the latest tag associated with that repository as the value:
 
 ```
+{
+  "extends": [
+    "config:base"
+  ],
+  "schedule": ["before 5am on Monday"],
+  "packageRules": [
+    {
+      "matchDepTypes": ["golang"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
+    },
+    {
+      "matchPackageNames": ["github.com/stretchr/testify"],
+      "matchUpdateTypes": ["major"] // Allow major updates for testify
+    }
+  ]
+}
+
+```
+
+
+```
 package test
 
 import (

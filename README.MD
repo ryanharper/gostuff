@@ -1,4 +1,17 @@
 ```
+#!/bin/sh
+set -e
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+	set -- memcached "$@"
+fi
+
+exec "$@"
+```
+
+dockerfile
+```
 FROM debian:bookworm-slim
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added

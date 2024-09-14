@@ -1,4 +1,68 @@
 ```
+package main
+
+import (
+    "crypto/tls"
+    "fmt"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "net/http/httputil"
+    "net/url"
+    "os"
+)
+
+func main() {
+    targetURL, err := url.Parse(os.Getenv("TARGET_URL"))
+    if err != nil {
+        log.Fatalf("Error parsing TARGET_URL: %v", err)
+    }
+
+    customHeaders := map[string]string{
+        "X-Custom-Header-1": "Value1",
+        "X-Custom-Header-2": "Value2",
+        // Add more custom headers as needed
+    }
+
+    // TLS configuration (adjust as needed)
+    tlsConfig := &tls.Config{
+        // InsecureSkipVerify: true, // Use with caution! Only for testing or self-signed certs
+        // RootCAs: ... // Provide root CAs if needed
+        // ServerName: ... // Set if needed for SNI
+    }
+
+    // Configure transport for HTTPS
+    transport := &http.Transport{TLSClientConfig: tlsConfig}
+
+    proxy := httputil.NewSingleHostReverseProxy(targetURL)
+    proxy.Transport = transport // Set the transport for HTTPS support
+    proxy.Director = func(req *http.Request) {
+        req.URL.Scheme = targetURL.Scheme
+        req.URL.Host = targetURL.Host
+        req.Host = targetURL.Host   
+
+
+        for key, value := range customHeaders {
+            req.Header.Set(key, value)
+        }
+    }
+
+    proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+        log.Printf("Error proxying request: %v", err)
+        // You might want to handle TLS errors more specifically here
+        http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+    }
+
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    fmt.Printf("Interception proxy listening on port %s...\n", port)
+    log.Fatal(http.ListenAndServe(":"+port, proxy))
+}
+```
+
+```
 #!/bin/sh
 set -e
 

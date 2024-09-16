@@ -130,6 +130,53 @@ func runSkaffold(args []string) {
         }
     }
 }
+
+func runSkaffold2(args []string) {
+    cmd := exec.Command("skaffold", args...)
+
+    // Get pipes for stdout and stderr
+    stdoutPipe, err := cmd.StdoutPipe()
+    if err != nil {
+        fmt.Println("Error creating stdout pipe:", err)
+        os.Exit(1)
+    }
+    stderrPipe, err := cmd.StderrPipe()
+    if err != nil {
+        fmt.Println("Error creating stderr pipe:", err)
+        os.Exit(1)
+    }
+
+    // Start the command
+    if err := cmd.Start(); err != nil {
+        fmt.Println("Error starting skaffold:", err)
+        os.Exit(1)
+    }
+
+    // Handle Ctrl+C to kill Skaffold
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt)
+    go func() {
+        <-c
+        fmt.Println("\nInterrupt signal received, terminating Skaffold...")
+        if err := cmd.Process.Kill(); err != nil {
+            fmt.Println("Error killing Skaffold process:", err)
+        }
+    }()
+
+    // Copy stdout and stderr directly to the console
+    go io.Copy(os.Stdout, stdoutPipe)
+    go io.Copy(os.Stderr, stderrPipe)
+
+    // Wait for the command to finish
+    if err := cmd.Wait(); err != nil {
+        if exitErr, ok := err.(*exec.ExitError); ok {
+            os.Exit(exitErr.ExitCode()) 
+        } else {
+            fmt.Println("Error waiting for skaffold:", err)
+            os.Exit(1)
+        }
+    }
+}
 ```
 ```
 package main

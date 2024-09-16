@@ -76,13 +76,58 @@ func main() {
 
 func runSkaffold(args []string) {
     cmd := exec.Command("skaffold", args...)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
 
-    err := cmd.Run()
+    // Get pipes for stdout and stderr
+    stdoutPipe, err := cmd.StdoutPipe()
     if err != nil {
-        fmt.Println("Error running skaffold:", err)
+        fmt.Println("Error creating stdout pipe:", err)
         os.Exit(1)
+    }
+    stderrPipe, err := cmd.StderrPipe()
+    if err != nil {
+        fmt.Println("Error creating stderr pipe:", err)
+        os.Exit(1)
+    }
+
+    // Start the command
+    if err := cmd.Start(); err != nil {
+        fmt.Println("Error starting skaffold:", err)
+        os.Exit(1)
+    }
+
+    // Handle Ctrl+C to kill Skaffold
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt)
+    go func() {
+        <-c
+        fmt.Println("\nInterrupt signal received, terminating Skaffold...")
+        if err := cmd.Process.Kill(); err != nil {
+            fmt.Println("Error killing Skaffold process:", err)
+        }
+    }()
+
+    // Stream stdout and stderr
+    go func() {
+        scanner := bufio.NewScanner(stdoutPipe)
+        for scanner.Scan() {
+            fmt.Println(scanner.Text())
+        }
+    }()
+    go func() {
+        scanner := bufio.NewScanner(stderrPipe)
+        for scanner.Scan() {
+            fmt.Fprintln(os.Stderr, scanner.Text()) // Print to stderr
+        }
+    }()
+
+    // Wait for the command to finish
+    if err := cmd.Wait(); err != nil {
+        if exitErr, ok := err.(*exec.ExitError); ok {
+            os.Exit(exitErr.ExitCode()) // Propagate Skaffold's exit code
+        } else {
+            fmt.Println("Error waiting for skaffold:", err)
+            os.Exit(1)
+        }
     }
 }
 ```

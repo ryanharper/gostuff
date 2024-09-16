@@ -177,6 +177,49 @@ func runSkaffold2(args []string) {
         }
     }
 }
+
+func runSkaffold3(args []string) {
+    cmd := exec.Command("skaffold", args...)
+
+    // Create a pty
+    ptmx, err := pty.Start(cmd)
+    if err != nil {
+        fmt.Println("Error starting pty:", err)
+        os.Exit(1)
+    }
+    defer ptmx.Close()
+
+    // Make the pty act like the controlling terminal
+    if err := term.MakeRaw(int(os.Stdin.Fd())); err != nil {
+        fmt.Println("Error making stdin raw:", err)
+        os.Exit(1)
+    }
+    defer term.Restore(int(os.Stdin.Fd()), term.State{}) 
+
+    // Handle Ctrl+C to kill Skaffold
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt)
+    go func() {
+        <-c
+        fmt.Println("\nInterrupt signal received, terminating Skaffold...")
+        if err := cmd.Process.Kill(); err != nil {
+            fmt.Println("Error killing Skaffold process:", err)
+        }
+    }()
+
+    // Copy pty output to stdout
+    go io.Copy(os.Stdout, ptmx)
+
+    // Wait for the command to finish
+    if err := cmd.Wait(); err != nil {
+        if exitErr, ok := err.(*exec.ExitError); ok {
+            os.Exit(exitErr.ExitCode()) 
+        } else {
+            fmt.Println("Error waiting for skaffold:", err)
+            os.Exit(1)
+        }
+    }
+}
 ```
 ```
 package main

@@ -1,3 +1,89 @@
+package main
+
+import (
+    "fmt"
+    "os"
+    "os/exec"
+    "strings"
+
+    "github.com/spf13/cobra"
+    "github.com/spf13/viper"
+)
+
+type Target struct {
+    Name      string            `mapstructure:"name"`
+    Variables map[string]string `mapstructure:"variables"`
+}
+
+func main() {
+    var configFile string
+    var targetName string
+
+    rootCmd := &cobra.Command{
+        Use:   "skaffmate [target]",
+        Short: "Skaffold wrapper with environment variable management",
+        Args:  cobra.ExactArgs(1),
+        Run: func(cmd *cobra.Command, args []string) {
+            targetName = args[0]
+
+            // Load configuration
+            viper.SetConfigFile(configFile)
+            viper.SetConfigType("yaml")
+            if err := viper.ReadInConfig(); err != nil {
+                fmt.Println("Error reading config file:", err)
+                os.Exit(1)
+            }
+
+            // Find target
+            var targets []Target
+            if err := viper.UnmarshalKey("targets", &targets); err != nil {
+                fmt.Println("Error unmarshaling targets:", err)
+                os.Exit(1)
+            }
+
+            var selectedTarget *Target
+            for _, t := range targets {
+                if t.Name == targetName {
+                    selectedTarget = &t
+                    break
+                }
+            }
+
+            if selectedTarget == nil {
+                fmt.Println("Target not found:", targetName)
+                os.Exit(1)
+            }
+
+            // Set environment variables
+            for k, v := range selectedTarget.Variables {
+                os.Setenv("GRAPH_"+k, v)
+            }
+
+            // Run skaffold
+            runSkaffold()
+        },
+    }
+
+    rootCmd.Flags().StringVarP(&configFile, "config", "c", "skaffmate.yaml", "Configuration file path")
+
+    if err := rootCmd.Execute(); err != nil {
+        fmt.Println("Error:", err)
+        os.Exit(1)
+    }
+}
+
+func runSkaffold() {
+    cmd := exec.Command("skaffold") // Adjust skaffold arguments if needed
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+
+    err := cmd.Run()
+    if err != nil {
+        fmt.Println("Error running skaffold:", err)
+        os.Exit(1)
+    }
+}
+```
 ```
 package main
 

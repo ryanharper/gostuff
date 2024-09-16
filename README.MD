@@ -21,11 +21,12 @@ func main() {
     var targetName string
 
     rootCmd := &cobra.Command{
-        Use:   "skaffmate [target]",
+        Use:   "skaffmate [target] [skaffold args...]",
         Short: "Skaffold wrapper with environment variable management",
-        Args:  cobra.ExactArgs(1),
+        Args:  cobra.MinimumNArgs(1),
         Run: func(cmd *cobra.Command, args []string) {
             targetName = args[0]
+            skaffoldArgs := args[1:]
 
             // Load configuration
             viper.SetConfigFile(configFile)
@@ -60,8 +61,8 @@ func main() {
                 os.Setenv("GRAPH_"+k, v)
             }
 
-            // Run skaffold
-            runSkaffold()
+            // Run skaffold with additional arguments
+            runSkaffold(skaffoldArgs)
         },
     }
 
@@ -73,8 +74,8 @@ func main() {
     }
 }
 
-func runSkaffold() {
-    cmd := exec.Command("skaffold") // Adjust skaffold arguments if needed
+func runSkaffold(args []string) {
+    cmd := exec.Command("skaffold", args...)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
 

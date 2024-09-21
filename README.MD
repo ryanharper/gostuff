@@ -1,121 +1,107 @@
 ```
-Certainly, here's the complete and corrected Go code to simulate the gcloud container clusters get-credentials command for a GKE cluster:
-
-Go
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "os"
-    "path/filepath"
+	"context"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 
-    "golang.org/x/oauth2/google"
-    "google.golang.org/api/container/v1"
-    "google.golang.org/api/option"
-    "k8s.io/client-go/tools/clientcmd"
-    "k8s.io/client-go/tools/clientcmd/api"
-    "k8s.io/client-go/util/homedir"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/container/v1"
+	"google.golang.org/api/option"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/util/homedir"
 )
 
 func main() {
-    // 1. Get Cluster Name, Zone, and Project
-    if len(os.Args) < 2 {
-        fmt.Println("Usage: go run get-credentials.go <cluster-name> --zone=<zone> [--project=<project>]")
-        os.Exit(1)
-    }
+	// 1. Define and Parse Flags
+	clusterName := flag.String("cluster", "", "Name of the GKE cluster")
+	region := flag.String("region", "", "Region of the GKE cluster (required)")
+	project := flag.String("project", "", "Project ID (optional)")
+	flag.Parse()
 
-    clusterName := os.Args[1]
-    zone := ""
-    project := ""
+	if *region == "" {
+		fmt.Println("Error: --region is required for GKE clusters")
+		os.Exit(1)
+	}
 
-    for _, arg := range os.Args[2:] {
-        if arg[:6] == "--zone" {
-            zone = arg[7:]
-        } else if arg[:9] == "--project" {
-            project = arg[10:]
-        }
-    }
+	// 2. Load Google Cloud Credentials (Application Default Credentials)
+	creds, err := google.FindDefaultCredentials(context.Background(), container.CloudPlatformScope)
+	if err != nil {
+		log.Fatalf("Error loading Google Cloud credentials: %v", err)
+	}
 
-    if zone == "" {
-        fmt.Println("Error: --zone is required for GKE clusters")
-        os.Exit(1)
-    }
+	if *project == "" {
+		*project = creds.ProjectID
+	}
 
-    // 2. Load Google Cloud Credentials (Application Default Credentials)
-    creds, err := google.FindDefaultCredentials(context.Background(), container.CloudPlatformScope)
-    if err != nil {
-        log.Fatalf("Error loading Google Cloud credentials: %v", err)
-    }
+	// 3. Create GKE Client
+	ctx := context.Background()
+	containerService, err := container.NewService(ctx, option.WithCredentials(creds))
+	if err != nil {
+		log.Fatalf("Error creating GKE client: %v", err)
+	}
 
-    if project == "" {
-        project = creds.ProjectID
-    }
+	// 4. Get Cluster Details
+	cluster, err := containerService.Projects.Locations.Clusters.Get(*project, *region, *clusterName).Context(ctx).Do()
+	if err != nil {
+		log.Fatalf("Error getting cluster details: %v", err)
+	}
 
-    // 3. Create GKE Client
-    ctx := context.Background()
-    containerService, err := container.NewService(ctx, option.WithCredentials(creds))
-    if err != nil {
-        log.Fatalf("Error creating GKE client: %v", err)
-    }
+	// 5. Extract and Configure Kubernetes Credentials
+	fmt.Printf("Fetching credentials for GKE cluster '%s' in region '%s' (project: %s)\n", *clusterName, *region, *project)
 
-    // 4. Get Cluster Details
-    cluster, err := containerService.Projects.Zones.Clusters.Get(project, zone, clusterName).Context(ctx).Do()
-    if err != nil {
-        log.Fatalf("Error getting cluster details: %v", err)
-    }
+	// Extract necessary information from the 'cluster' object
+	endpoint := cluster.Endpoint
+	certificateAuthorityData := cluster.MasterAuth.ClusterCaCertificate
 
-    // 5. Extract and Configure Kubernetes Credentials
-    fmt.Printf("Fetching credentials for GKE cluster '%s' in zone '%s' (project: %s)\n", clusterName, zone, project)
+	// 6. Update kubeconfig
+	kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config")
+	config, err := clientcmd.LoadFromFile(kubeconfigPath)
+	if err != nil {
+		log.Fatalf("Error loading kubeconfig: %v", err)
+	}
 
-    // Extract necessary information from the 'cluster' object
-    endpoint := cluster.Endpoint
-    certificateAuthorityData := cluster.MasterAuth.ClusterCaCertificate
+	// Create or update cluster entry in kubeconfig
+	newCluster := &api.Cluster{
+		Server:                   endpoint,
+		CertificateAuthorityData: []byte(certificateAuthorityData),
+	}
 
-    // 6. Update kubeconfig
-    kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config")
-    config, err := clientcmd.LoadFromFile(kubeconfigPath)
-    if err != nil {
-        log.Fatalf("Error loading kubeconfig: %v", err)
-    }
+	newAuthInfo := &api.AuthInfo{
+		AuthProvider: &api.AuthProviderConfig{
+			Name: "gcp",
+			Config: map[string]string{
+				"cmd-args":        "config config-helper --format=json",
+				"cmd-path":        "gcloud",
+				"expiry-key":      "{.credential.token_expiry}",
+				"token-key":       "{.credential.access_token}",   
 
-    // Create or update cluster entry in kubeconfig
-    newCluster := &api.Cluster{
-        Server:                   endpoint,
-        CertificateAuthorityData: []byte(certificateAuthorityData),
-    }
+				"access-token-key": "{.credential.access_token}",
+			},
+		},
+	}
 
-    newAuthInfo := &api.AuthInfo{
-        AuthProvider: &api.AuthProviderConfig{
-            Name: "gcp",
-            Config: map[string]string{
-                "cmd-args":        "config config-helper --format=json",
-                "cmd-path":        "gcloud",
-                "expiry-key":      "{.credential.token_expiry}",
-                "token-key":       "{.credential.access_token}",   
+	newContext := &api.Context{
+		Cluster:  *clusterName,
+		AuthInfo: *clusterName,
+	}
 
-                "access-token-key": "{.credential.access_token}",
-            },
-        },
-    }
+	config.Clusters[*clusterName] = newCluster
+	config.AuthInfos[*clusterName] = newAuthInfo
+	config.Contexts[*clusterName] = newContext
+	config.CurrentContext = *clusterName
 
-    newContext := &api.Context{
-        Cluster:  clusterName,
-        AuthInfo: clusterName,
-    }
+	err = clientcmd.WriteToFile(*config, kubeconfigPath)
+	if err != nil {
+		log.Fatalf("Error writing kubeconfig: %v", err)
+	}
 
-    config.Clusters[clusterName] = newCluster
-    config.AuthInfos[clusterName] = newAuthInfo
-    config.Contexts[clusterName] = newContext
-    config.CurrentContext = clusterName
-
-    err = clientcmd.WriteToFile(*config, kubeconfigPath)
-    if err != nil {
-        log.Fatalf("Error writing kubeconfig: %v", err)
-    }
-
-    fmt.Println("Credentials fetched and configured successfully!")
+	fmt.Println("Credentials fetched and configured successfully!")
 }
 ```
 

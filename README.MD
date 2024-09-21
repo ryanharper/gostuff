@@ -66,6 +66,34 @@ func main() {
 		log.Fatalf("Error loading kubeconfig: %v", err)
 	}
 
+        / 6. Extract and Configure Kubernetes Credentials
+    fmt.Printf("Fetching credentials for GKE cluster '%s' in region '%s' (project: %s)\n", *clusterName, *region, *project)
+
+    // Extract necessary information from the 'cluster' object
+    endpoint := cluster.Endpoint
+    certificateAuthorityData := cluster.MasterAuth.ClusterCaCertificate
+
+    // Encode certificate authority data in PEM format
+    pemBlock := &pem.Block{
+        Type:  "CERTIFICATE",
+        Bytes: []byte(certificateAuthorityData),
+    }
+    pemEncodedCert := pem.EncodeToMemory(pemBlock)
+
+    // 7. Update kubeconfig
+    kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config")
+    config, err := clientcmd.LoadFromFile(kubeconfigPath)
+    if err != nil {
+        log.Fatalf("Error loading kubeconfig: %v", err)
+    }
+
+    // Create or update cluster entry in kubeconfig
+    newCluster := &api.Cluster{
+        Server:                   endpoint,
+        CertificateAuthorityData: pemEncodedCert, // Use the PEM-encoded certificate
+    }
+
+
 	// Create or update cluster entry in kubeconfig
 	newCluster := &api.Cluster{
 		Server:                   endpoint,

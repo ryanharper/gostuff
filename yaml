@@ -1,0 +1,22 @@
+"gopkg.in/yaml.v3"
+
+// Load configuration
+			file, err := os.Open(configFile)
+			if err != nil {
+				return fmt.Errorf("error opening config file: %w", err)
+			}
+			defer file.Close()
+
+			decoder := yaml.NewDecoder(file)
+			var allConfigs []map[string]interface{}
+
+			for {
+				var config map[string]interface{}
+				if err := decoder.Decode(&config); err != nil {
+					if err == io.EOF {
+						break // End of file
+					}
+					return fmt.Errorf("error decoding YAML: %w", err)
+				}
+				allConfigs = append(allConfigs, config)
+			}

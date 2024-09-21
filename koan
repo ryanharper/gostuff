@@ -1,0 +1,77 @@
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+    "os/exec"
+
+    "github.com/knadh/koanf"
+    "github.com/knadh/koanf/parsers/yaml"
+    "github.com/knadh/koanf/providers/file"
+    "github.com/spf13/cobra"   
+
+)
+
+type Target struct {
+    Name      string            `koanf:"name"`
+    Variables map[string]string `koanf:"variables"`
+}
+
+func main() {
+    var configFile string
+    var targetName string
+
+    k := koanf.New(".") // Initialize Koanf
+
+    rootCmd := &cobra.Command{
+        Use:   "skaffmate [target] [skaffold args...]",
+        Short: "Skaffold wrapper with environment variable management",
+        Args:  cobra.MinimumNArgs(1),
+        RunE: func(cmd *cobra.Command, args []string) error {
+            targetName = args[0]
+            skaffoldArgs := args[1:]
+
+            // Load configuration
+            if err := k.Load(file.Provider(configFile), yaml.Parser()); err != nil {
+                return fmt.Errorf("error reading config file: %w", err)
+            }
+
+            // Find target
+            var targets []Target
+            if err := k.Unmarshal("targets", &targets); err != nil {
+                return fmt.Errorf("error unmarshaling targets: %w", err)
+            }
+
+            var selectedTarget *Target
+            for _, t := range targets {
+                if t.Name == targetName {
+                    selectedTarget = &t
+                    break
+                }
+            }
+
+            if selectedTarget == nil {
+                return fmt.Errorf("target not found: %s", targetName)
+            }
+
+            // Set environment variables
+            for k, v := range selectedTarget.Variables {
+                os.Setenv("GRAPH_"+k, v)
+            }
+
+            // Run skaffold with additional arguments
+            return runSkaffold(skaffoldArgs)
+        },
+    }
+
+    rootCmd.Flags().StringVarP(&configFile, "config", "c", "skaffmate.yaml", "Configuration file path")
+
+    if err := rootCmd.Execute(); err != nil {
+        log.Fatalf("Error: %v", err)
+    }
+}
+
+func runSkaffold(args []string) error {
+    // ... (rest of the runSkaffold function remains the same)
+}

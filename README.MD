@@ -2,6 +2,102 @@
 package main
 
 import (
+    "context"
+    "fmt"
+    "log"
+    "os"
+    "path/filepath"
+
+    "golang.org/x/oauth2/google"
+    "google.golang.org/api/container/v1"
+    "k8s.io/client-go/tools/clientcmd"
+    "k8s.io/client-go/util/homedir"
+)
+
+func main() {
+    // 1. Get Cluster Name, Zone, and Project
+    if len(os.Args) < 2 {
+        fmt.Println("Usage: go run get-credentials.go <cluster-name> --zone=<zone> [--project=<project>]")
+        os.Exit(1)
+    }
+
+    clusterName := os.Args[1]
+    zone := ""
+    project := ""
+
+    for _, arg := range os.Args[2:] {
+        if arg[:6] == "--zone" {
+            zone = arg[7:]
+        } else if arg[:9] == "--project" {
+            project = arg[10:]
+        }
+    }
+
+    if zone == "" {
+        fmt.Println("Error: --zone is required for GKE clusters")
+        os.Exit(1)
+    }
+
+    // 2. Load Google Cloud Credentials (Application Default Credentials)
+    //    You can also use other methods to obtain credentials, like setting
+    //    environment variables or providing a service account key file.
+    creds, err := google.FindDefaultCredentials(context.Background(), container.CloudPlatformScope)
+    if err != nil {
+        log.Fatalf("Error loading Google Cloud credentials: %v", err)
+    }
+
+    if project == "" {
+        project = creds.ProjectID // Use project from credentials if not provided
+    }
+
+    // 3. Create GKE Client
+    containerService, err := container.NewService(context.Background(), google.WithDefaultCredentials(creds))
+    if err != nil {
+        log.Fatalf("Error creating GKE client: %v", err)
+    }
+
+    // 4. Get Cluster Details
+    cluster, err := containerService.Projects.Zones.Clusters.Get(project, zone, clusterName).Do()
+    if err != nil {
+        log.Fatalf("Error getting cluster details: %v", err)
+    }
+
+    // 5. Extract and Configure Kubernetes Credentials
+    //    This part is a simplified simulation.  The actual `gcloud` command
+    //    might perform additional steps to extract and configure credentials
+    //    securely.
+
+    fmt.Printf("Fetching credentials for GKE cluster '%s' in zone '%s' (project: %s)\n", clusterName, zone, project)
+
+    // Extract necessary information from the 'cluster' object
+    // For example:
+    // - endpoint: cluster.Endpoint
+    // - certificateAuthorityData: cluster.MasterAuth.ClusterCaCertificate
+
+    // 6. Update kubeconfig
+    kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config") // Default kubeconfig location
+    config, err := clientcmd.LoadFromFile(kubeconfigPath)
+    if err != nil {
+        log.Fatalf("Error loading kubeconfig: %v", err)
+    }
+
+    // Update or create a new cluster entry in the kubeconfig
+    // using the extracted information from the 'cluster' object
+
+    // Write the updated kubeconfig back to the file
+    err = clientcmd.WriteToFile(*config, kubeconfigPath)
+    if err != nil {
+        log.Fatalf("Error writing kubeconfig: %v", err)
+    }
+
+    fmt.Println("Credentials fetched and configured successfully!")
+}
+```
+
+```
+package main
+
+import (
     "fmt"
     "os"
     "os/exec"

@@ -28,7 +28,7 @@ func main() {
 		fmt.Println("Error: --region is required for GKE clusters")
 		os.Exit(1)
 	}
-
+        clusterResourceName := fmt.Sprintf("projects/%s/locations/%s/clusters/%s", *project, *region, *clusterName)
 	// 2. Load Google Cloud Credentials (Application Default Credentials)
 	creds, err := google.FindDefaultCredentials(context.Background(), container.CloudPlatformScope)
 	if err != nil {

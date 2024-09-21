@@ -1,0 +1,75 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/spf13/cobra"   
+
+	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
+)
+
+// ... (rest of the code, including Target struct)
+
+func main() {
+	// ... (other parts of the main function)
+
+	rootCmd := &cobra.Command{
+		// ...
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// ... (load configuration and find target)
+
+			// Set environment variables, handling gsm:// secrets
+			for k, v := range selectedTarget.Variables {
+				if strings.HasPrefix(v, "gsm://") {
+					secretValue, err := getSecretFromGSM(v[6:]) // Remove "gsm://" prefix
+					if err != nil {
+						return fmt.Errorf("error fetching secret: %w", err)
+					}
+					os.Setenv("GRAPH_"+k, secretValue)
+				} else {
+					os.Setenv("GRAPH_"+k, v)
+				}
+			}
+
+			// ... (run skaffold)
+		},
+	}
+
+	// ... (rest of the main function)
+}
+
+func getSecretFromGSM(secretName string) (string, error) {
+	ctx := context.Background()
+
+	// Create the client.
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to create secretmanager client: %v", err)
+	}
+	defer client.Close()
+
+	// Build the request.   
+
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: secretName,
+	}
+
+	// Call the API.
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
+	if err != nil   
+ {
+		return "", fmt.Errorf("failed to access secret version:   
+ %v", err)
+	}
+
+	return string(result.Payload.Data), nil
+}

@@ -73,6 +73,27 @@ func main() {
     endpoint := cluster.Endpoint
     certificateAuthorityData := cluster.MasterAuth.ClusterCaCertificate
 
+
+   certificateAuthorityData := cluster.MasterAuth.ClusterCaCertificate
+
+	// Decode the Base64-encoded certificate authority data
+	decodedCert, err := base64.StdEncoding.DecodeString(certificateAuthorityData)
+	if err != nil {
+		log.Fatalf("Error decoding certificate authority data: %v", err)
+	}
+
+	// Encode the decoded certificate data in PEM format
+	pemBlock := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: decodedCert,
+	}
+	pemEncodedCert := pem.EncodeToMemory(pemBlock)
+
+	// Remove any padding from the PEM-encoded certificate
+	pemEncodedCert = []byte(strings.TrimRight(string(pemEncodedCert), "="))
+
+
+
     // Encode certificate authority data in PEM format
     pemBlock := &pem.Block{
         Type:  "CERTIFICATE",

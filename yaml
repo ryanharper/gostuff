@@ -1,5 +1,7 @@
 "gopkg.in/yaml.v3"
 
+k := koanf.NewWithConf(&koanf.ConfMap{Merge: false}) 
+
 // Load configuration
 			file, err := os.Open(configFile)
 			if err != nil {

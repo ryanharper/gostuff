@@ -1,4 +1,7 @@
 ```
+Certainly, here's the complete and corrected Go code to simulate the gcloud container clusters get-credentials command for a GKE cluster:
+
+Go
 package main
 
 import (
@@ -10,7 +13,9 @@ import (
 
     "golang.org/x/oauth2/google"
     "google.golang.org/api/container/v1"
+    "google.golang.org/api/option"
     "k8s.io/client-go/tools/clientcmd"
+    "k8s.io/client-go/tools/clientcmd/api"
     "k8s.io/client-go/util/homedir"
 )
 
@@ -39,52 +44,72 @@ func main() {
     }
 
     // 2. Load Google Cloud Credentials (Application Default Credentials)
-    //    You can also use other methods to obtain credentials, like setting
-    //    environment variables or providing a service account key file.
     creds, err := google.FindDefaultCredentials(context.Background(), container.CloudPlatformScope)
     if err != nil {
         log.Fatalf("Error loading Google Cloud credentials: %v", err)
     }
 
     if project == "" {
-        project = creds.ProjectID // Use project from credentials if not provided
+        project = creds.ProjectID
     }
 
     // 3. Create GKE Client
-    containerService, err := container.NewService(context.Background(), google.WithDefaultCredentials(creds))
+    ctx := context.Background()
+    containerService, err := container.NewService(ctx, option.WithCredentials(creds))
     if err != nil {
         log.Fatalf("Error creating GKE client: %v", err)
     }
 
     // 4. Get Cluster Details
-    cluster, err := containerService.Projects.Zones.Clusters.Get(project, zone, clusterName).Do()
+    cluster, err := containerService.Projects.Zones.Clusters.Get(project, zone, clusterName).Context(ctx).Do()
     if err != nil {
         log.Fatalf("Error getting cluster details: %v", err)
     }
 
     // 5. Extract and Configure Kubernetes Credentials
-    //    This part is a simplified simulation.  The actual `gcloud` command
-    //    might perform additional steps to extract and configure credentials
-    //    securely.
-
     fmt.Printf("Fetching credentials for GKE cluster '%s' in zone '%s' (project: %s)\n", clusterName, zone, project)
 
     // Extract necessary information from the 'cluster' object
-    // For example:
-    // - endpoint: cluster.Endpoint
-    // - certificateAuthorityData: cluster.MasterAuth.ClusterCaCertificate
+    endpoint := cluster.Endpoint
+    certificateAuthorityData := cluster.MasterAuth.ClusterCaCertificate
 
     // 6. Update kubeconfig
-    kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config") // Default kubeconfig location
+    kubeconfigPath := filepath.Join(homedir.HomeDir(), ".kube", "config")
     config, err := clientcmd.LoadFromFile(kubeconfigPath)
     if err != nil {
         log.Fatalf("Error loading kubeconfig: %v", err)
     }
 
-    // Update or create a new cluster entry in the kubeconfig
-    // using the extracted information from the 'cluster' object
+    // Create or update cluster entry in kubeconfig
+    newCluster := &api.Cluster{
+        Server:                   endpoint,
+        CertificateAuthorityData: []byte(certificateAuthorityData),
+    }
 
-    // Write the updated kubeconfig back to the file
+    newAuthInfo := &api.AuthInfo{
+        AuthProvider: &api.AuthProviderConfig{
+            Name: "gcp",
+            Config: map[string]string{
+                "cmd-args":        "config config-helper --format=json",
+                "cmd-path":        "gcloud",
+                "expiry-key":      "{.credential.token_expiry}",
+                "token-key":       "{.credential.access_token}",   
+
+                "access-token-key": "{.credential.access_token}",
+            },
+        },
+    }
+
+    newContext := &api.Context{
+        Cluster:  clusterName,
+        AuthInfo: clusterName,
+    }
+
+    config.Clusters[clusterName] = newCluster
+    config.AuthInfos[clusterName] = newAuthInfo
+    config.Contexts[clusterName] = newContext
+    config.CurrentContext = clusterName
+
     err = clientcmd.WriteToFile(*config, kubeconfigPath)
     if err != nil {
         log.Fatalf("Error writing kubeconfig: %v", err)

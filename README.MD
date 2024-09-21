@@ -1,3 +1,10 @@
+allSettings := viper.AllSettings() 
+
+	// Iterate over the map and access values using their original case
+	for key, value := range allSettings {
+		fmt.Println(key, ":", value)
+	}
+
 ```
 viper.SetEnvKeyReplacer(strings.NewReplacer())
 ```

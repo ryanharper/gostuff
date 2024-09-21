@@ -1,0 +1,45 @@
+
+
+import (
+    "fmt"
+    "io/ioutil"
+    "log"
+    "strings"
+
+    "gopkg.in/yaml.v2"
+)
+
+// Define your struct to match the YAML structure
+type MyYAMLStruct struct {
+    // Add your fields here
+    Field1 string `yaml:"field1"`
+    Field2 string `yaml:"field2"`
+}
+
+func main() {
+    // Read the YAML file
+    data, err := ioutil.ReadFile("path/to/your/file.yaml")
+    if err != nil {
+        log.Fatalf("failed to read file: %v", err)
+    }
+
+    // Split the content by the `---` separator
+    documents := strings.Split(string(data), "---")
+
+    // Iterate over each document and parse it
+    for _, doc := range documents {
+        // Skip empty documents
+        if strings.TrimSpace(doc) == "" {
+            continue
+        }
+
+        var parsedDoc MyYAMLStruct
+        err := yaml.Unmarshal([]byte(doc), &parsedDoc)
+        if err != nil {
+            log.Fatalf("failed to parse YAML document: %v", err)
+        }
+
+        // Process the parsed document
+        fmt.Printf("Parsed Document: %+v\n", parsedDoc)
+    }
+}

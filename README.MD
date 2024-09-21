@@ -1,4 +1,7 @@
 ```
+viper.SetEnvKeyReplacer(strings.NewReplacer())
+```
+```
 package main
 
 import (

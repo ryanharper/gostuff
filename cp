@@ -51,39 +51,30 @@ func downloadPackageVersion(projectID, location, repository, packageName, versio
         return fmt.Errorf("version %s not found for package %s", version, packageName)
     }
 
-    // Get the download URL for the package version
-    // Note: This part depends on the type of artifact and how it's stored in the registry.
-    // For example, if it's a Docker image, you would use a different method.
-    // Here, we assume it's a generic file stored in the registry.
-
-    // Construct the file name
-    fileName := fmt.Sprintf("%s-%s", packageName, version)
-
-    // Download the file using HTTP GET request
-    resp, err := http.Get(fileName)
+    // Get the package details
+    packageReq := &artifactregistrypb.GetPackageRequest{
+        Name: packageVersion.Name,
+    }
+    packageResp, err := client.GetPackage(ctx, packageReq)
     if err != nil {
-        return fmt.Errorf("failed to download file: %v", err)
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode != http.StatusOK {
-        return fmt.Errorf("failed to download file: received status code %d", resp.StatusCode)
+        return fmt.Errorf("failed to get package: %v", err)
     }
 
-    // Write the file content to the output file
+    // Write the package content to the output file
     outputFile, err := os.Create(outputPath)
     if err != nil {
         return fmt.Errorf("failed to create output file: %v", err)
     }
     defer outputFile.Close()
 
-    _, err = io.Copy(outputFile, resp.Body)
+    _, err = io.Copy(outputFile, packageResp.GetContent())
     if err != nil {
-        return fmt.Errorf("failed to write file content to output file: %v", err)
+        return fmt.Errorf("failed to write package content to file: %v", err)
     }
 
     return nil
 }
+
 
 func main() {
     projectID := "your-project-id"

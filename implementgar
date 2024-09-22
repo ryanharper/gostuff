@@ -1,0 +1,118 @@
+Go
+package main
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/artifactregistry/apiv1"
+	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
+	"google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
+	"google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+)
+
+// ... (Config and Environment structs remain the same)
+
+func main() {
+	// ... (Cobra command setup)
+}
+
+func resolveSecretIfPresent(value string) (string, error) {
+    // ... (Implementation remains the same)
+}
+
+func getSecretFromGSM(secretName string) (string, error) {
+	ctx := context.Background()
+
+	// Create the client.
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to create secretmanager client: %v", err)
+	}
+	defer client.Close()
+
+	// Build the request.   
+
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: secretName,
+	}
+
+	// Call the API.
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
+	if err != nil   
+ {
+		return "", fmt.Errorf("failed to access secret version:   
+ %v", err)
+	}
+
+	return string(result.Payload.Data), nil
+}
+
+func downloadFromGAR(repoURL, dependencyName, version, destination string) error {
+	// Create an Artifact Registry client
+	ctx := context.Background()
+	client, err := artifactregistry.NewClient(ctx, option.WithEndpoint(repoURL))
+	if err != nil {
+		return fmt.Errorf("failed to create Artifact Registry client: %v", err)
+	}
+	defer client.Close()
+
+	// List versions in the repository
+	req := &artifactregistrypb.ListVersionsRequest{
+		Parent: fmt.Sprintf("projects/%s/locations/%s/repositories/%s/packages/%s",
+			"your-project-id",   // Replace with your actual project ID
+			"your-region",       // Replace with your actual region
+			"your-repository-id", // Replace with your actual repository ID
+			dependencyName,
+		),
+	}
+	it := client.ListVersions(ctx, req)
+
+	// Find the matching version
+	var versionInfo *artifactregistrypb.Version
+	for {
+		ver, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to iterate versions: %v", err)
+		}
+		if ver.GetName() == version {
+			versionInfo = ver
+			break
+		}
+	}
+
+	if versionInfo == nil {
+		return fmt.Errorf("version not found: %s", version)
+	}
+
+	// Download the artifact content
+	if err := downloadFile(versionInfo.GetUri(), destination); err != nil {
+		return fmt.Errorf("failed to download artifact: %v", err)
+	}
+
+	fmt.Printf("Downloaded %s:%s to %s\n", dependencyName, version, destination)
+	return nil
+}
+
+func downloadFile(url, destination string) error {
+	// ... (Implementation remains the same)
+}
+
+func downloadFromNexus(baseURL, user, token, dependencyName, version, destination string) error {
+	// ... (Implementation for Nexus download, you'll need to fill this in)
+	return nil
+}

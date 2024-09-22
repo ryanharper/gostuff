@@ -1,0 +1,28 @@
+package main
+
+import (
+    "fmt"
+    "io/ioutil"
+    "log"
+
+    "gopkg.in/yaml.v2"
+    "github.com/GoogleContainerTools/skaffold/v2/pkg/skaffold/schema/latest"
+)
+
+func main() {
+    // Read the skaffold.yaml file
+    data, err := ioutil.ReadFile("path/to/skaffold.yaml")
+    if err != nil {
+        log.Fatalf("failed to read file: %v", err)
+    }
+
+    // Unmarshal the YAML content into the SkaffoldConfig struct
+    var config latest.SkaffoldConfig
+    err = yaml.Unmarshal(data, &config)
+    if err != nil {
+        log.Fatalf("failed to unmarshal YAML: %v", err)
+    }
+
+    // Print the configuration
+    fmt.Printf("Skaffold Config: %+v\n", config)
+}

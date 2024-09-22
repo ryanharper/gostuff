@@ -1,0 +1,128 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/artifactregistry/apiv1"
+	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
+	"google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
+	"google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+)
+
+// Configuration structure
+type Config struct {
+	Dependencies struct {
+		Items []struct {
+			Name        string `yaml:"name"`
+			Version     string `yaml:"version"`
+			Destination string `yaml:"destination"`
+			Repo        string `yaml:"repo"`
+		} `yaml:"items"`
+	} `yaml:"dependencies"`
+	ArtifactRegistries map[string]map[string]interface{} `yaml:"artifact_registries"`
+}
+
+func main() {
+	// ... (Cobra command setup)
+
+	rootCmd := &cobra.Command{
+		Use:   "artifact-downloader",
+		Short: "Downloads artifacts from specified registries based on configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var configFile string
+			var targetName string
+
+			// Load configuration
+			viper.SetConfigFile(configFile)
+			viper.SetConfigType("yaml")
+			if err := viper.ReadInConfig(); err != nil {
+				return fmt.Errorf("error reading config file: %w", err)
+			}
+
+			var config Config
+			if err := viper.Unmarshal(&config); err != nil {
+				return fmt.Errorf("error unmarshaling config: %w", err)
+			}
+
+			target, ok := config.ArtifactRegistries[targetName]
+			if !ok {
+				return fmt.Errorf("target not found: %s", targetName)
+			}
+
+			// Iterate through dependencies
+			for _, dep := range config.Dependencies.Items {
+				var err error
+				if dep.Repo == "gar-generic" {
+					garConfig, ok := target["gar-generic"].(map[string]interface{})
+					if !ok {
+						return fmt.Errorf("invalid gar-generic configuration for target %s", targetName)
+					}
+					err = downloadFromGAR(garConfig["url"].(string), dep.Name, dep.Version, dep.Destination)
+				} else if dep.Repo == "nexus3" {
+					nexus3Config, ok := target["nexus3"].(map[string]interface{})
+					if !ok {
+						return fmt.Errorf("invalid nexus3 configuration for target %s", targetName)
+					}
+
+					// Resolve secrets if present
+					user, err := resolveSecretIfPresent(nexus3Config["user"].(string))
+					if err != nil {
+						return err
+					}
+					token, err := resolveSecretIfPresent(nexus3Config["token"].(string))
+					if err != nil {
+						return err
+					}
+
+					err = downloadFromNexus(nexus3Config["url"].(string), user, token, dep.Name, dep.Version, dep.Destination)
+				} else {
+					err = fmt.Errorf("unsupported repo type: %s", dep.Repo)
+				}
+
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	}
+
+	// ... (rest of the main function)
+}
+
+func resolveSecretIfPresent(value string) (string, error) {
+	if strings.HasPrefix(value, "gsm://") {
+		secretValue, err := getSecretFromGSM(value[6:]) // Remove "gsm://" prefix
+		if err != nil {
+			return "", fmt.Errorf("error fetching secret: %w", err)
+		}
+		return secretValue, nil
+	}
+	return value, nil
+}
+
+func getSecretFromGSM(secretName string) (string, error) {
+	// ... (Implementation for fetching secrets from Google Secret Manager)
+}
+
+func downloadFromGAR(repoURL, dependencyName, version, destination string) error {
+	// ... (Implementation for downloading from Google Artifact Registry)
+}
+
+func downloadFromNexus(baseURL, user, token, dependencyName, version, destination string) error {
+	// ... (Implementation for Nexus download, you'll need to fill this in)
+	return nil
+}

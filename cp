@@ -5,6 +5,7 @@ import (
     "fmt"
     "io"
     "log"
+    "net/http"
     "os"
 
     "cloud.google.com/go/artifactregistry/apiv1"
@@ -33,15 +34,15 @@ func downloadPackageVersion(projectID, location, repository, packageName, versio
 
     var packageVersion *artifactregistrypb.Version
     for {
-        version, err := it.Next()
+        v, err := it.Next()
         if err == iterator.Done {
             break
         }
         if err != nil {
             return fmt.Errorf("failed to list versions: %v", err)
         }
-        if version.Name == fmt.Sprintf("%s/versions/%s", packageName, version) {
-            packageVersion = version
+        if v.Name == fmt.Sprintf("%s/versions/%s", packageName, version) {
+            packageVersion = v
             break
         }
     }
@@ -50,25 +51,35 @@ func downloadPackageVersion(projectID, location, repository, packageName, versio
         return fmt.Errorf("version %s not found for package %s", version, packageName)
     }
 
-    // Download the package version
-    versionReq := &artifactregistrypb.GetVersionRequest{
-        Name: packageVersion.Name,
-    }
-    versionResp, err := client.GetVersion(ctx, versionReq)
+    // Get the download URL for the package version
+    // Note: This part depends on the type of artifact and how it's stored in the registry.
+    // For example, if it's a Docker image, you would use a different method.
+    // Here, we assume it's a generic file stored in the registry.
+
+    // Construct the file name
+    fileName := fmt.Sprintf("%s-%s", packageName, version)
+
+    // Download the file using HTTP GET request
+    resp, err := http.Get(fileName)
     if err != nil {
-        return fmt.Errorf("failed to get package version: %v", err)
+        return fmt.Errorf("failed to download file: %v", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to download file: received status code %d", resp.StatusCode)
     }
 
-    // Write the package content to the output file
+    // Write the file content to the output file
     outputFile, err := os.Create(outputPath)
     if err != nil {
         return fmt.Errorf("failed to create output file: %v", err)
     }
     defer outputFile.Close()
 
-    _, err = io.Copy(outputFile, versionResp.GetContent())
+    _, err = io.Copy(outputFile, resp.Body)
     if err != nil {
-        return fmt.Errorf("failed to write package content to file: %v", err)
+        return fmt.Errorf("failed to write file content to output file: %v", err)
     }
 
     return nil

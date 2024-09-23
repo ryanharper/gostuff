@@ -1,0 +1,79 @@
+package main
+
+import (
+    "context"
+    "fmt"
+    "io"
+    "log"
+    "net/http"
+    "os"
+    "strings"
+
+    // ... (other imports from the previous examples) ...
+    "golang.org/x/oauth2/google"
+    "google.golang.org/api/option"
+)
+
+func downloadFile(ctx context.Context, client *artifactregistry.Client, versionName string) error {
+    // Extract necessary information from the version name
+    parts := strings.Split(versionName, "/")
+    if len(parts) < 9 {
+        return fmt.Errorf("invalid version name format: %s", versionName)
+    }
+    projectID := parts[1]
+    location := parts[3]
+    repositoryName := parts[5]
+    artifactName := parts[7]
+    versionAndFile := parts[8] // This contains both the version and the file name
+
+    // Construct the download URL
+    downloadURL := fmt.Sprintf("https://artifactregistry-googleapis.com/download/v1/projects/%s/locations/%s/repositories/%s/files/%s:%s",
+        projectID, location, repositoryName, artifactName, versionAndFile)
+
+    // Get the bearer token from the Google Cloud client's authentication
+    creds, err := google.FindDefaultCredentials(ctx, artifactregistry.DefaultAuthScopes()...)
+    if err != nil {
+        return fmt.Errorf("failed to find default credentials: %v", err)
+    }
+    tokenSource := creds.TokenSource
+    token, err := tokenSource.Token()
+    if err != nil {
+        return fmt.Errorf("failed to get token: %v", err)
+    }
+
+    // Create an HTTP client with the bearer token
+    httpClient := &http.Client{}
+    req, err := http.NewRequest("GET", downloadURL, nil)
+    if err != nil {
+        return fmt.Errorf("failed to create request: %v", err)
+    }
+    req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+    // Make the HTTP request to download the file
+    resp, err := httpClient.Do(req)
+    if err != nil {
+        return fmt.Errorf("failed to download file: %v", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("unexpected status code: %d", resp.StatusCode)   
+
+    }
+
+    // Create the local file
+    outFile, err := os.Create(versionAndFile) // You might want to customize the local filename
+    if err != nil {
+        return fmt.Errorf("failed to create local file: %v", err)
+    }
+    defer outFile.Close()
+
+    // Write the file contents to the local file
+    _, err = io.Copy(outFile, resp.Body)
+    if err != nil {
+        return fmt.Errorf("failed to write file contents: %v", err)
+    }
+
+    fmt.Printf("Downloaded file: %s\n", versionAndFile)
+    return nil
+}

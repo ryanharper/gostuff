@@ -1,0 +1,55 @@
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "os"
+
+    artifactregistry "cloud.google.com/go/artifactregistry/apiv1"
+    "google.golang.org/api/iterator"
+    artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1"
+)
+
+func main() {
+    // Ensure project ID and repository information are provided as command-line arguments
+    if len(os.Args) != 4 {
+        fmt.Println("Usage: go run main.go <project-id> <location> <repository>")
+        os.Exit(1)
+    }
+
+    projectID := os.Args[1]
+    location := os.Args[2]
+    repository := os.Args[3]
+
+    // Create an Artifact Registry client
+    ctx := context.Background()
+    client, err := artifactregistry.NewClient(ctx)
+    if err != nil {
+        log.Fatalf("Failed to create client: %v", err)
+    }
+    defer client.Close()
+
+    // Construct the package name
+    packageName := fmt.Sprintf("projects/%s/locations/%s/repositories/%s/packages/%s",
+        projectID, location, repository, "your-package-name") // Replace "your-package-name" with the actual package name
+
+    // Create the request to list versions
+    req := &artifactregistrypb.ListVersionsRequest{
+        Parent: packageName,
+    }
+
+    // List the versions
+    it := client.ListVersions(ctx, req)
+    for {
+        resp, err := it.Next()
+        if err == iterator.Done {
+            break
+        }
+        if err != nil {
+            log.Fatalf("Failed to list versions: %v", err)
+        }
+
+        fmt.Println(resp.GetName(), resp.GetVersion()) // Or just resp.GetVersion() if you only need the version string
+    }
+}

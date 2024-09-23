@@ -1,3 +1,9 @@
+text := "This is a string to split"
+    lastIndex := strings.LastIndex(text, " ")
+    lastItem := text[lastIndex+1:] // +1 to exclude the space itself
+    fmt.Println(lastItem) // Output: split
+
+
 package main
 
 import (

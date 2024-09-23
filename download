@@ -1,0 +1,26 @@
+func downloadFile(ctx context.Context, client *artifactregistry.Client, versionName string) error {
+    // Get the file contents
+    req := &artifactregistrypb.GetFileRequest{
+        Name: versionName,
+    }
+    stream, err := client.GetFile(ctx, req)
+    if err != nil {
+        return fmt.Errorf("failed to get file: %v", err)
+    }
+
+    // Create the local file
+    outFile, err := os.Create(versionName) // You might want to customize the local filename
+    if err != nil {
+        return fmt.Errorf("failed to create local file: %v", err)
+    }
+    defer outFile.Close()
+
+    // Write the file contents to the local file
+    _, err = io.Copy(outFile, stream)
+    if err != nil {
+        return fmt.Errorf("failed to write file contents: %v", err)
+    }
+
+    fmt.Printf("Downloaded file: %s\n", versionName)
+    return nil
+}

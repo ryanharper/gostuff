@@ -1,0 +1,36 @@
+import (
+    "os"
+    "path/filepath"
+)
+
+func ensureParentAndChildExist(path string) (bool, error) {
+    // Get the absolute path relative to the working directory
+    absPath, err := filepath.Abs(path)
+    if err != nil {
+        return false, fmt.Errorf("failed to get absolute path: %w", err)
+    }
+
+    // Get the parent directory of the absolute path
+    parentDir := filepath.Dir(absPath)
+
+    // Check if the parent directory exists, create it if not
+    if _, err := os.Stat(parentDir); err != nil {
+        if os.IsNotExist(err) {
+            if err := os.MkdirAll(parentDir, 0755); err != nil { 
+                return false, fmt.Errorf("failed to create parent directory: %w", err)
+            }
+        } else {
+            return false, err 
+        }
+    }
+
+    // Check if the child (file or directory) exists
+    if _, err := os.Stat(absPath); err != nil { // Use absPath here as well
+        if os.IsNotExist(err) {
+            return false, nil 
+        }
+        return false, err 
+    }
+
+    return true, nil 
+}

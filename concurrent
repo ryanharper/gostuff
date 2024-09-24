@@ -1,0 +1,62 @@
+package main
+
+import (
+    // ... other imports
+)
+
+// ... (Config, Environment, and other functions remain the same)
+
+func main() {
+    // ... (Cobra command setup)
+
+    rootCmd := &cobra.Command{
+        // ...
+        RunE: func(cmd *cobra.Command, args []string) error {
+            // ... (load configuration and find target)
+
+            errChan := make(chan error, len(dependencies.Items)) // Channel to collect errors
+            doneChan := make(chan struct{}, len(dependencies.Items)) // Channel to signal completion
+
+            // Iterate through dependencies and download concurrently
+            for _, dep := range dependencies.Items {
+                go func(dep struct {
+                    Name        string `yaml:"name"`
+                    Version     string `yaml:"version"`
+                    Destination string `yaml:"destination"`
+                    Repo        string `yaml:"repo"`
+                }) {
+                    var err error
+                    if dep.Repo == "gar-generic" {
+                        // ... (download logic for GAR)
+                    } else if dep.Repo == "nexus3" {
+                        // ... (download logic for Nexus)
+                    } else {
+                        err = fmt.Errorf("unsupported repo type: %s", dep.Repo)
+                    }
+
+                    if err != nil {
+                        errChan <- err
+                    }
+                    doneChan <- struct{}{} // Signal completion
+                }(dep)
+            }
+
+            // Wait for all downloads to complete or encounter an error
+            var finalErr error
+            for i := 0; i < len(dependencies.Items); i++ {
+                select {
+                case err := <-errChan:
+                    if finalErr == nil { // Keep the first error encountered
+                        finalErr = err
+                    }
+                case <-doneChan:
+                    // A download has completed
+                }
+            }
+
+            return finalErr
+        },
+    }
+
+    // ... (rest of the main function)
+}

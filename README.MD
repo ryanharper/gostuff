@@ -1,3 +1,27 @@
+```
+func runSkaffoldInit(args []string) error {
+    cmd := exec.Command("skaffold", args...)
+
+    // Capture stdout and stderr in buffers
+    var stdoutBuf, stderrBuf bytes.Buffer
+    cmd.Stdout = &stdoutBuf
+    cmd.Stderr = &stderrBuf
+
+    // Run the command
+    err := cmd.Run()
+    if err != nil {
+        // If the command exits uncleanly, print the captured output
+        fmt.Println("Skaffold initialization failed:")
+        fmt.Println(stdoutBuf.String())
+        fmt.Println(stderrBuf.String())
+        return err
+    }
+
+    return nil 
+}
+```
+
+
 allSettings := viper.AllSettings() 
 
 	// Iterate over the map and access values using their original case

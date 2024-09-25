@@ -1,3 +1,30 @@
+import (
+    "fmt"
+    "os"
+
+    "helm.sh/helm/v3/pkg/registry"
+)
+
+func helmRegistryLogin(registryURL, username, password string) error {
+    // 1. Create a Helm registry client
+    client, err := registry.NewClient()
+    if err != nil {
+        return fmt.Errorf("failed to create registry client: %w", err)
+    }
+
+    // 2. Perform the login
+    err = client.Login(
+        registryURL,
+        registry.LoginOptBasicAuth(username, password), // Use basic auth with username and password
+    )
+    if err != nil {
+        return fmt.Errorf("failed to login to registry: %w", err)
+    }
+
+    fmt.Println("Successfully logged in to Helm registry:", registryURL)
+    return nil
+}
+
 func helmRegistryLogin(registryURL, username, password string) error {
     // ... (other parts of the function to obtain the token remain the same)
 

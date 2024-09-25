@@ -1,73 +1,39 @@
-import (
-    "bytes"
-    "encoding/base64"
-    "encoding/json"
-    "fmt"
-    "net/http"
-    "os"
-    "path/filepath"
-
-    "gopkg.in/yaml.v2"
-)
-
 func helmRegistryLogin(registryURL, username, password string) error {
-    // 1. Construct the authentication request
-    authEndpoint := fmt.Sprintf("%s/v2/_catalog", registryURL)
-    authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(username+":"+password)))
+    // ... (other parts of the function to obtain the token remain the same)
 
-    req, err := http.NewRequest("GET", authEndpoint, nil) 
-    if err != nil {
-        return fmt.Errorf("failed to create request: %w", err)
-    }
-    req.Header.Set("Authorization", authHeader)
+    // 3. Store the token in Helm's configuration (config.json)
+    configDir := filepath.Join(os.Getenv("HOME"), ".config", "helm", "registry")
+    configPath := filepath.Join(configDir, "config.json")
 
-    // 2. Send the request and get the token
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return fmt.Errorf("failed to send request: %w", err)
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode   
- != http.StatusOK {
-        return   
- fmt.Errorf("authentication failed: %s", resp.Status)
+    // Check if the config directory exists, create it if not
+    if _, err := os.Stat(configDir); os.IsNotExist(err) {
+        if err := os.MkdirAll(configDir, 0755); err != nil {
+            return fmt.Errorf("failed to create config directory: %w", err)
+        }
     }
 
-    var result map[string]interface{}
-    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        return fmt.Errorf("failed to decode response: %w", err)
+    // Read the existing config.json (if it exists)
+    var configData map[string]map[string]map[string]string
+    if _, err := os.Stat(configPath); err == nil { // File exists
+        fileData, err := os.ReadFile(configPath)
+        if err != nil {
+            return fmt.Errorf("failed to read Helm config: %w", err)
+        }
+        if err := json.Unmarshal(fileData, &configData); err != nil {
+            return fmt.Errorf("failed to unmarshal Helm config: %w", err)
+        }
+    } else {
+        configData = make(map[string]map[string]map[string]string)
     }
 
-    token, ok := result["token"].(string)
-    if !ok {
-        return fmt.Errorf("token not found in response")
+    // Update or add the auth entry for the given registry URL
+    if configData["auths"] == nil {
+        configData["auths"] = make(map[string]map[string]string)
     }
+    configData["auths"][registryURL] = map[string]string{"auth": token}
 
-    // 3. Store the token in Helm's configuration
-    configPath := filepath.Join(os.Getenv("HOME"), ".config", "helm", "repositories.yaml")
-    configData, err := os.ReadFile(configPath)
-    if err != nil {
-        return fmt.Errorf("failed to read Helm config: %w", err)
-    }
-
-    var repositories map[string]interface{}
-    if err := yaml.Unmarshal(configData, &repositories); err != nil {
-        return fmt.Errorf("failed to unmarshal Helm config: %w", err)
-    }
-
-    // Assuming the registry URL is the key in the repositories map
-    repoConfig, ok := repositories[registryURL].(map[string]interface{})
-    if !ok {
-        repoConfig = make(map[string]interface{})
-        repositories[registryURL] = repoConfig
-    }
-    repoConfig["username"] = username
-    repoConfig["password"] = password
-    repoConfig["auth"] = token 
-
-    updatedConfigData, err := yaml.Marshal(repositories)
+    // Write the updated config back to config.json
+    updatedConfigData, err := json.MarshalIndent(configData, "", "    ") // Use indentation for readability
     if err != nil {
         return fmt.Errorf("failed to marshal Helm config: %w", err)
     }

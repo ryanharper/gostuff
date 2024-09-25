@@ -1,0 +1,26 @@
+import (
+    // ... other imports
+    "golang.org/x/oauth2/google"
+    "google.golang.org/api/option"
+)
+
+func getGoogleCloudAuthToken() (string, error) {
+    ctx := context.Background()
+
+    // Use Application Default Credentials for authentication
+    creds, err := google.FindDefaultCredentials(ctx)
+    if err != nil {
+        return "", fmt.Errorf("failed to find default credentials: %v", err)
+    }
+
+    // Get the token source
+    tokenSource := creds.TokenSource
+
+    // Obtain an ID token
+    token, err := tokenSource.Token()
+    if err != nil {
+        return "", fmt.Errorf("failed to get token: %v", err)
+    }
+
+    return token.AccessToken, nil
+}

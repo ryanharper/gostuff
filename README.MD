@@ -1,4 +1,11 @@
 ```
+// Get the Google Cloud auth token
+    token, err := getGoogleCloudAuthToken()
+    if err != nil {
+        return fmt.Errorf("failed to get Google Cloud auth token: %w", err)
+    }
+```
+```
 func isSkaffoldInitialized() (bool, error) {
     // Check if the file exists
     _, err := os.Stat(".skaffold_initialised")

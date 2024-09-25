@@ -1,0 +1,80 @@
+import (
+    "bytes"
+    "encoding/base64"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "os"
+    "path/filepath"
+
+    "gopkg.in/yaml.v2"
+)
+
+func helmRegistryLogin(registryURL, username, password string) error {
+    // 1. Construct the authentication request
+    authEndpoint := fmt.Sprintf("%s/v2/_catalog", registryURL)
+    authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(username+":"+password)))
+
+    req, err := http.NewRequest("GET", authEndpoint, nil) 
+    if err != nil {
+        return fmt.Errorf("failed to create request: %w", err)
+    }
+    req.Header.Set("Authorization", authHeader)
+
+    // 2. Send the request and get the token
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return fmt.Errorf("failed to send request: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode   
+ != http.StatusOK {
+        return   
+ fmt.Errorf("authentication failed: %s", resp.Status)
+    }
+
+    var result map[string]interface{}
+    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+        return fmt.Errorf("failed to decode response: %w", err)
+    }
+
+    token, ok := result["token"].(string)
+    if !ok {
+        return fmt.Errorf("token not found in response")
+    }
+
+    // 3. Store the token in Helm's configuration
+    configPath := filepath.Join(os.Getenv("HOME"), ".config", "helm", "repositories.yaml")
+    configData, err := os.ReadFile(configPath)
+    if err != nil {
+        return fmt.Errorf("failed to read Helm config: %w", err)
+    }
+
+    var repositories map[string]interface{}
+    if err := yaml.Unmarshal(configData, &repositories); err != nil {
+        return fmt.Errorf("failed to unmarshal Helm config: %w", err)
+    }
+
+    // Assuming the registry URL is the key in the repositories map
+    repoConfig, ok := repositories[registryURL].(map[string]interface{})
+    if !ok {
+        repoConfig = make(map[string]interface{})
+        repositories[registryURL] = repoConfig
+    }
+    repoConfig["username"] = username
+    repoConfig["password"] = password
+    repoConfig["auth"] = token 
+
+    updatedConfigData, err := yaml.Marshal(repositories)
+    if err != nil {
+        return fmt.Errorf("failed to marshal Helm config: %w", err)
+    }
+
+    if err := os.WriteFile(configPath, updatedConfigData, 0644); err != nil {
+        return fmt.Errorf("failed to write Helm config: %w", err)
+    }
+
+    return nil
+}

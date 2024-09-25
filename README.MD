@@ -1,4 +1,30 @@
 ```
+func isSkaffoldInitialized() (bool, error) {
+    // Check if the file exists
+    _, err := os.Stat(".skaffold_initialised")
+    if err != nil {
+        if os.IsNotExist(err) {
+            return false, nil // File doesn't exist
+        }
+        return false, err // Some other error occurred
+    }
+
+    // File exists and is not a directory
+    return true, nil
+}
+
+func createSkaffoldInitializedFile() error {
+    // Create an empty file
+    file, err := os.Create(".skaffold_initialised")
+    if err != nil {
+        return fmt.Errorf("failed to create .skaffold_initialised file: %w", err)
+    }
+    defer file.Close()
+    return nil
+}
+```
+
+```
 func runSkaffoldInit(args []string) error {
     cmd := exec.Command("skaffold", args...)
 

@@ -1,0 +1,18 @@
+receivers:
+  filelog:
+    include:
+      - /path/to/your/log/file.log  # Replace with the actual path to your log file
+
+processors:
+  # Optional: Add any processors you need here, e.g., to transform log attributes
+
+exporters:
+  otlphttp:
+    endpoint: http://<loki-hostname>:<loki-port>/loki/api/v1/push  # Replace with your Loki endpoint
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      # Optional: Add processors to the pipeline if needed
+      exporters: [otlphttp]

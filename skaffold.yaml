@@ -1,0 +1,11 @@
+apiVersion: skaffold/v4beta12
+kind: Config
+build:
+  artifacts:
+  - image: test # Replace with your image name
+    context: . # Replace with your application's context directory
+    docker: {}
+  googleCloudBuild: 
+    projectId: something
+    # availableSecrets: 
+    #   something: something

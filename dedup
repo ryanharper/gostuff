@@ -1,0 +1,28 @@
+func deduplicateMaps(maps []map[string]interface{}) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0)
+	seen := make(map[string]bool)
+
+	for _, m := range maps {
+		// Create a string representation of the map (you might need to adjust this based on your map's contents)
+		key := fmt.Sprintf("%v", m) 
+
+		if !seen[key] {
+			seen[key] = true
+			result = append(result, m)
+		}
+	}
+
+	return result
+}
+
+func main() {
+	maps := []map[string]interface{}{
+		{"id": 1, "name": "Product A", "price": 10.0},
+		{"id": 2, "name": "Product B", "price": 20.0},
+		{"id": 1, "name": "Product A", "price": 10.0}, // Duplicate
+		{"id": 3, "name": "Product C", "price": 30.0},
+	}
+
+	deduplicatedMaps := deduplicateMaps(maps)
+	fmt.Println(deduplicatedMaps)
+}

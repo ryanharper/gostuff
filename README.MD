@@ -1,4 +1,30 @@
 ```
+import (
+    "context"
+    "fmt"
+
+    "github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
+    "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest"   
+
+)
+
+cfg, err := latest.GetConfigSet(configFile, latest.WithRunMode(latest.RunModeDev)) // Adjust RunMode as needed
+if err != nil {
+    return fmt.Errorf("error loading Skaffold config: %w", err)
+}
+
+runner, err := runner.NewForConfig(context.Background(), cfg)
+if err != nil {
+    return fmt.Errorf("error creating Skaffold runner: %w", err)
+}
+
+err = runner.Run(context.Background(), os.Stdout, os.Stderr, "build") // Replace "build" with the desired action
+if err != nil {
+    return fmt.Errorf("error running Skaffold: %w", err)
+}
+```
+
+```
 // Get the Google Cloud auth token
     token, err := getGoogleCloudAuthToken()
     if err != nil {

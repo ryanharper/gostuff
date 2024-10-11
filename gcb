@@ -1,0 +1,13 @@
+preBuildSteps:
+•- name: gcr. io/cloud-builders/gsutil
+•id: gsutil
+• entrypoint: bash args:
+• -• -C
+•- echo •$$TEST •>•/workspace/.netrc/.netrc; • •ls -ltra•/workspace
+volumes:
+-• name: • secret-volume
+• path: •/workspace/.netrc secretEnv:
+• -• TEST
+availableSecrets: secretManager:
+- • env: • TEST
+• versionName: projects/<PROJECT_ID>secrets/test/versions/latest

@@ -1,4 +1,42 @@
 ```
+// Get the command's stdin pipe
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		fmt.Println("Error creating stdin pipe:", err)
+		return
+	}
+
+	// Start the command
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println("Error starting command:", err)
+		return
+	}
+
+	// Write the template output to the command's stdin
+	_, err = io.Copy(stdin, &tplOutput)
+	if err != nil {
+		fmt.Println("Error copying data to stdin:", err)
+		return
+	}
+
+	// Close the stdin pipe
+	err = stdin.Close()
+	if err != nil {
+		fmt.Println("Error closing stdin:", err)
+		return
+	}
+
+	// Wait for the command to finish
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println("Error waiting for command:", err)
+		return
+	}
+```
+
+
+```
 project: my-project
 configVersion: 1
 ---

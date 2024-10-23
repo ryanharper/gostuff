@@ -1,4 +1,16 @@
 ```
+import (
+	"regexp"
+	"strings"
+)
+
+func splitYAMLDocs(yamlData string) []string {
+	// Regex to match "---" that is not part of a comment
+	re := regexp.MustCompile(`(?m)^---\s*$`) 
+	return re.Split(yamlData, -1)
+}
+```
+```
 // Get the command's stdin pipe
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

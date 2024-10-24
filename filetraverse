@@ -1,0 +1,55 @@
+package main
+
+import (
+	// ... (other imports) ...
+	"path/filepath" // Import this for file path handling
+)
+
+// ... (rest of your code for reading and parsing the YAML file) ...
+
+// 1. Create a new template with Sprig functions
+tmpl := template.New("config").Funcs(sprig.TxtFuncMap())
+
+// 2. Load templates from a directory (replace "templates" with your actual directory)
+templateDir := "templates" 
+err := filepath.Walk(templateDir, func(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() && strings.HasSuffix(info.Name(), ".tpl") {
+		// Parse and add each template file
+		_, err = tmpl.ParseFiles(path)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+})
+if err != nil {
+	log.Fatalf("Error loading templates: %v", err)
+}
+
+// ... (rest of your code, including the custom include function if needed) ...
+
+// 4. Execute the desired template for each image
+for _, image := range config.Images {
+	// Create the output file name (e.g., Dockerfile.my-app-image)
+	outputFileName := fmt.Sprintf("Dockerfile.%s", image.Image)
+
+	// Create the output file
+	outputFile, err := os.Create(outputFileName)
+	if err != nil {
+		log.Fatalf("Error creating output file: %v", err)
+	}
+	defer outputFile.Close()
+
+	// Execute the template and write the output to the file
+	err = tmpl.ExecuteTemplate(outputFile, "Dockerfile.tpl", image) // Assuming "Dockerfile.tpl" is your template name
+	if err != nil {
+		log.Fatalf("Error executing template: %v", err)
+	}
+
+	fmt.Printf("Generated Dockerfile for %s: %s\n", image.Image, outputFileName)
+}
+
+fmt.Println("\nTemplates rendered successfully!")

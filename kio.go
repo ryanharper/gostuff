@@ -75,3 +75,48 @@ func (p *plugin) Generate() (resmap.ResMap, error) {
         secretValue, err := fetchSecretFromGSM(p.Spec.GsmSecretName, p.Spec.GsmSecretVersion)
         if err != nil {
                 return nil, err
+        }
+
+        // Create a Kubernetes Secret
+        secret := &resource.Resource{
+                RNode: *yaml.NewRNode(&yaml.Node{
+                        Kind: yaml.MappingNode,
+                        Tag:  "!!map",
+                }),
+        }
+        secret.SetApiVersion("v1")
+        secret.SetKind("Secret")
+        secret.SetName(p.Spec.SecretName)
+        secret.SetNamespace(p.ObjectMeta.Namespace) // Set the namespace if available
+
+        // Add the secret data
+        err = secret.PipeE(
+                yaml.SetField("type", yaml.NewStringRNode("Opaque")),
+                yaml.SetField("data", yaml.NewMapRNode(&map[string]string{
+                        p.Spec.SecretKey: secretValue,
+                })),
+        )
+        if err != nil {
+                return nil, err
+        }
+
+        // Add an annotation to indicate that this secret was generated from GSM
+        if err := secret.SetAnnotation("secret-source", "google-secret-manager"); err != nil {
+                return nil, err
+        }
+        rm := resmap.New()
+
+        err = rm.Append(secret)
+        return rm, err
+}
+
+func fetchSecretFromGSM(secretName, secretVersion string) (string, error) {
+        // Execute the fetch-secret.sh script
+        cmd := exec.Command("./fetch-secret.sh", secretName, secretVersion)
+        output, err := cmd.Output()
+        if err != nil {
+                return "", fmt.Errorf("failed to fetch secret from GSM: %v", err)
+        }
+
+        return string(output), nil
+}

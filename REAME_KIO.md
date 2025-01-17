@@ -85,3 +85,16 @@ spec:
   gsmSecretVersion: latest  # The version of the secret (e.g., latest, 1, 2, etc.)
   secretKey: mysecretkey # The key inside the Kubernetes Secret where the value will be stored
 ```
+```
+type plugin struct {
+    resmap.ResMap
+    types.ObjectMeta      `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+    APIVersion          string `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty"`
+    Spec                struct {
+        SecretName        string `json:"secretName,omitempty" yaml:"secretName,omitempty"`
+        GsmSecretName     string `json:"gsmSecretName,omitempty" yaml:"gsmSecretName,omitempty"`
+        GsmSecretVersion  string `json:"gsmSecretVersion,omitempty" yaml:"gsmSecretVersion,omitempty"`
+        SecretKey         string `json:"secretKey,omitempty" yaml:"secretKey,omitempty"`
+    } `json:"spec,omitempty" yaml:"spec,omitempty"`
+}
+```

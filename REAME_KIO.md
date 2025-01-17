@@ -73,3 +73,15 @@ configurations:
   types:
   - SecretGenerator
 ````
+
+```YAML
+apiVersion: my.kustomize.plugins/v1
+kind: SecretGenerator
+metadata:
+  name: secret-generator-config
+spec:
+  secretName: my-gsm-secret # The name of the Kubernetes Secret to be created
+  gsmSecretName: projects/YOUR_PROJECT_ID/secrets/YOUR_SECRET_NAME # The full resource name of your secret in GSM
+  gsmSecretVersion: latest  # The version of the secret (e.g., latest, 1, 2, etc.)
+  secretKey: mysecretkey # The key inside the Kubernetes Secret where the value will be stored
+```

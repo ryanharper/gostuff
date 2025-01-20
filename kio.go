@@ -1,27 +1,28 @@
 package main
 
 import (
-        "bytes"
+	"bytes"
+	"context"
 	"encoding/base64"
-        "context"
-        "fmt"
-        "os"
+	"fmt"
+	"io"
+	"os"
 
-        secretmanager "cloud.google.com/go/secretmanager/apiv1"
-        "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
-        "sigs.k8s.io/kustomize/kyaml/kio"
-        "sigs.k8s.io/kustomize/kyaml/yaml"
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"sigs.k8s.io/kustomize/kyaml/kio"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
 type SecretGenerator struct {
-        Metadata struct {
-                Name      string `yaml:"name"`
-                Namespace string `yaml:"namespace"`
-        } `yaml:"metadata"`
-        Spec struct {
-                SecretName     string            `yaml:"secretName"`
-                SecretMappings map[string]string `yaml:"secretMappings"`
-        } `yaml:"spec"`
+	Metadata struct {
+		Name      string `yaml:"name"`
+		Namespace string `yaml:"namespace"`
+	} `yaml:"metadata"`
+	Spec struct {
+		SecretName     string            `yaml:"secretName"`
+		SecretMappings map[string]string `yaml:"secretMappings"`
+	} `yaml:"spec"`
 }
 
 func (p *SecretGenerator) Filter(items []*yaml.RNode) ([]*yaml.RNode, error) {
@@ -52,76 +53,77 @@ func (p *SecretGenerator) Filter(items []*yaml.RNode) ([]*yaml.RNode, error) {
 }
 
 func (p *SecretGenerator) Generate() (*yaml.RNode, error) {
-        ctx := context.Background()
-        client, err := secretmanager.NewClient(ctx)
-        if err != nil {
-                return nil, fmt.Errorf("failed to create secretmanager client: %v", err)
-        }
-        defer client.Close()
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secretmanager client: %v", err)
+	}
+	defer client.Close()
 
-        secretData := make(map[string]string)
-        for secretKey, gsmSecretName := range p.Spec.SecretMappings {
-                secretValue, err := fetchSecretFromGSM(ctx, client, gsmSecretName)
-                if err != nil {
-                        return nil, err
-                }
-                secretData[secretKey] = base64Encode(secretValue)
-        }
+	secretData := make(map[string]string)
+	for secretKey, gsmSecretName := range p.Spec.SecretMappings {
+		secretValue, err := fetchSecretFromGSM(ctx, client, gsmSecretName)
+		if err != nil {
+			return nil, err
+		}
+		secretData[secretKey] = base64Encode(secretValue)
+	}
 
-        return yaml.FromMap(map[string]interface{}{
-                "apiVersion": "v1",
-                "kind":       "Secret",
-                "metadata": map[string]string{
-                        "name":      p.Spec.SecretName,
-                        "namespace": p.Metadata.Namespace,
-                        "annotations": map[string]string{
-                                "secret-source": "google-secret-manager",
-                        },
-                },
-                "type": "Opaque",
-                "data": secretData,
-        })
+	return yaml.FromMap(map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Secret",
+		"metadata": map[string]string{
+			"name":      p.Spec.SecretName,
+			"namespace": p.Metadata.Namespace,
+			"annotations": map[string]string{
+				"secret-source": "google-secret-manager",
+			},
+		},
+		"type": "Opaque",
+		"data": secretData,
+	})
 }
 
 func fetchSecretFromGSM(ctx context.Context, client *secretmanager.Client, gsmSecretName string) (string, error) {
-        accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
-                Name: gsmSecretName + "/versions/latest",
-        }
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: gsmSecretName + "/versions/latest",
+	}
 
-        result, err := client.AccessSecretVersion(ctx, accessRequest)
-        if err != nil {
-                return "", fmt.Errorf("failed to access secret version: %v", err)
-        }
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
+	if err != nil {
+		return "", fmt.Errorf("failed to access secret version: %v", err)
+	}
 
-        return string(result.Payload.Data), nil
+	return string(result.Payload.Data), nil
 }
 
 func base64Encode(input string) string {
-        return base64.StdEncoding.EncodeToString([]byte(input))
+	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 
 func main() {
-    p := &SecretGenerator{}
-    pipeline := kio.Pipeline{
-        Inputs: []kio.Reader{&kio.ByteReader{Reader: os.Stdin}},
-        Filters: []kio.Filter{
-            &kio.YAMLMarshaller{
-                KeepReaderAnnotations: true,
-                Sort:                  true,
-                Style:                 yaml.FlowStyle,
-            },
-            p,
-            &kio.YAMLMarshaller{
-                KeepReaderAnnotations: true,
-                Sort:                  true,
-                Style:                 yaml.FlowStyle,
-            },
-        },
-        Outputs: []kio.Writer{&kio.ByteWriter{Writer: os.Stdout, KeepReaderAnnotations: true}},
-    }
+	p := &SecretGenerator{}
+	pipeline := kio.Pipeline{
+		Inputs: []kio.Reader{&kio.ByteReader{Reader: os.Stdin}},
+		Filters: []kio.Filter{
+			p,
+		},
+		Outputs: []kio.Writer{
+			&kio.ByteWriter{
+				Writer: os.Stdout,
+				// Clear annotations set by kio.ByteReader
+				ClearAnnotations: map[string]string{
+					"kyaml.io/index":          "",
+					"kyaml.io/path":           "",
+					"internal.config.kubernetes.io/index": "",
+					"internal.config.kubernetes.io/path":  "",
+				},
+			},
+		},
+	}
 
-    if err := pipeline.Execute(); err != nil {
-        fmt.Fprintf(os.Stderr, "Error executing pipeline: %v\n", err)
-        os.Exit(1)
-    }
+	if err := pipeline.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error executing pipeline: %v\n", err)
+		os.Exit(1)
+	}
 }

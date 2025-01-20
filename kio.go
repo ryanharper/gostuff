@@ -3,35 +3,28 @@ package main
 import (
         "context"
         "fmt"
+        "os"
 
         secretmanager "cloud.google.com/go/secretmanager/apiv1"
         "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
-        "sigs.k8s.io/kustomize/api/resmap"
-        "sigs.k8s.io/kustomize/api/resource"
-        "sigs.k8s.io/kustomize/api/types"
-        "sigs.k8s.io/yaml"
+        "sigs.k8s.io/kustomize/kyaml/fn/framework"
+        "sigs.k8s.io/kustomize/kyaml/fn/framework/command"
+        "sigs.k8s.io/kustomize/kyaml/kio"
+        "sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
-type plugin struct {
-        rf          *resmap.Factory
-        types.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-        Spec        struct {
-                SecretName     string            `json:"secretName,omitempty" yaml:"secretName,omitempty"`
-                SecretMappings map[string]string `json:"secretMappings,omitempty" yaml:"secretMappings,omitempty"`
-        } `json:"spec,omitempty" yaml:"spec,omitempty"`
+type SecretGenerator struct {
+        Metadata struct {
+                Name      string `yaml:"name"`
+                Namespace string `yaml:"namespace"`
+        } `yaml:"metadata"`
+        Spec struct {
+                SecretName     string            `yaml:"secretName"`
+                SecretMappings map[string]string `yaml:"secretMappings"`
+        } `yaml:"spec"`
 }
 
-//nolint: go-lint
-var KustomizePlugin plugin
-
-func (p *plugin) Config(
-        _ *resmap.PluginHelpers, c []byte) (err error) {
-        p.Spec.SecretName = ""
-        p.Spec.SecretMappings = nil
-        return yaml.Unmarshal(c, p)
-}
-
-func (p *plugin) Generate() (resmap.ResMap, error) {
+func (p *SecretGenerator) Generate() (*yaml.RNode, error) {
         ctx := context.Background()
         client, err := secretmanager.NewClient(ctx)
         if err != nil {
@@ -45,47 +38,25 @@ func (p *plugin) Generate() (resmap.ResMap, error) {
                 if err != nil {
                         return nil, err
                 }
-                secretData[secretKey] = secretValue
+                secretData[secretKey] = base64Encode(secretValue)
         }
 
-        // Create the Kubernetes Secret using the helper functions
-        secret := &resource.Resource{
-                RNode: *yaml.NewRNode(&yaml.Node{
-                        Kind: yaml.MappingNode,
-                        Tag:  "!!map",
-                }),
-        }
-        secret.SetApiVersion("v1")
-        secret.SetKind("Secret")
-        secret.SetName(p.Spec.SecretName)
-        secret.SetNamespace(p.ObjectMeta.Namespace)
-
-        // Add the secret data
-        err = secret.PipeE(
-                yaml.SetField("type", yaml.NewStringRNode("Opaque")),
-                yaml.SetField("data", yaml.NewMapRNode(&secretData)),
-        )
-        if err != nil {
-                return nil, err
-        }
-
-        // Add an annotation to indicate that this secret was generated from GSM
-        if err := secret.SetAnnotation("secret-source", "google-secret-manager"); err != nil {
-                return nil, err
-        }
-
-        // Add the secret to the resource map
-        rm := resmap.New()
-        err = rm.Append(secret)
-        if err != nil {
-                return nil, err
-        }
-
-        return rm, nil
+        return yaml.FromMap(map[string]interface{}{
+                "apiVersion": "v1",
+                "kind":       "Secret",
+                "metadata": map[string]string{
+                        "name":      p.Spec.SecretName,
+                        "namespace": p.Metadata.Namespace,
+                        "annotations": map[string]string{
+                                "secret-source": "google-secret-manager",
+                        },
+                },
+                "type": "Opaque",
+                "data": secretData,
+        })
 }
 
 func fetchSecretFromGSM(ctx context.Context, client *secretmanager.Client, gsmSecretName string) (string, error) {
-        // Assuming "latest" version for simplicity; you can add version management
         accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
                 Name: gsmSecretName + "/versions/latest",
         }
@@ -98,5 +69,33 @@ func fetchSecretFromGSM(ctx context.Context, client *secretmanager.Client, gsmSe
         return string(result.Payload.Data), nil
 }
 
+func base64Encode(input string) string {
+	return base64.StdEncoding.EncodeToString([]byte(input))
+}
+
 func main() {
+        var p SecretGenerator
+        cmd := framework.Command(&p, func(items []*yaml.RNode) ([]*yaml.RNode, error) {
+                for i := range items {
+                        if items[i].GetApiVersion() == "my.kustomize.plugins/v1" && items[i].GetKind() == "SecretGenerator" {
+                                if err := yaml.Unmarshal([]byte(items[i].MustString()), &p); err != nil {
+                                        return nil, err
+                                }
+
+                                generatedSecret, err := p.Generate()
+                                if err != nil {
+                                        return nil, err
+                                }
+
+                                // Append the generated secret to the resource list
+                                items = append(items, generatedSecret)
+                        }
+                }
+                return items, nil
+        })
+
+        if err := cmd.Execute(); err != nil {
+                fmt.Fprintf(os.Stderr, "error: %v\n", err)
+                os.Exit(1)
+        }
 }

@@ -1,83 +1,54 @@
 package main
 
 import (
+        "context"
         "fmt"
-        "os"
-        "os/exec"
 
+        secretmanager "cloud.google.com/go/secretmanager/apiv1"
+        "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
         "sigs.k8s.io/kustomize/api/resmap"
         "sigs.k8s.io/kustomize/api/resource"
         "sigs.k8s.io/kustomize/api/types"
-        "sigs.k8s.io/kustomize/kyaml/kio"
-        "sigs.k8s.io/kustomize/kyaml/yaml"
+        "sigs.k8s.io/yaml"
 )
 
 type plugin struct {
-        resmap.ResMap
-        types.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-        Spec           struct {
-                SecretName        string `json:"secretName,omitempty" yaml:"secretName,omitempty"`
-                GsmSecretName     string `json:"gsmSecretName,omitempty" yaml:"gsmSecretName,omitempty"`
-                GsmSecretVersion  string `json:"gsmSecretVersion,omitempty" yaml:"gsmSecretVersion,omitempty"`
-                SecretKey         string `json:"secretKey,omitempty" yaml:"secretKey,omitempty"`
+        rf          *resmap.Factory
+        types.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+        Spec        struct {
+                SecretName     string            `json:"secretName,omitempty" yaml:"secretName,omitempty"`
+                SecretMappings map[string]string `json:"secretMappings,omitempty" yaml:"secretMappings,omitempty"`
         } `json:"spec,omitempty" yaml:"spec,omitempty"`
 }
 
 //nolint: go-lint
 var KustomizePlugin plugin
 
-func main() {
-        rw := &kio.ByteReadWriter{
-                Reader:                os.Stdin,
-                Writer:                os.Stdout,
-                KeepReaderAnnotations: true,
-        }
-
-        err := kio.Pipeline{
-                Inputs: []kio.Reader{rw},
-                Filters: []kio.Filter{
-                        &KustomizePlugin, // Now correctly using the Filter interface
-                },
-                Outputs: []kio.Writer{rw},
-        }.Execute()
-
-        if err != nil {
-                fmt.Fprintf(os.Stderr, "Error executing pipeline: %v\n", err)
-                os.Exit(1)
-        }
-}
-
 func (p *plugin) Config(
         _ *resmap.PluginHelpers, c []byte) (err error) {
+        p.Spec.SecretName = ""
+        p.Spec.SecretMappings = nil
         return yaml.Unmarshal(c, p)
 }
 
-// Filter implements the kio.Filter interface
-func (p *plugin) Filter(input []*yaml.RNode) ([]*yaml.RNode, error) {
-    // Call the Generate function to create the secret resource
-    rm, err := p.Generate()
-    if err != nil {
-        return nil, err
-    }
-
-    // Convert the ResMap to []*yaml.RNode
-    var output []*yaml.RNode
-    for _, r := range rm.Resources() {
-        output = append(output, r.RNode)
-    }
-
-    // Return the generated resources
-    return output, nil
-}
-
 func (p *plugin) Generate() (resmap.ResMap, error) {
-        // Fetch the secret value from GSM
-        secretValue, err := fetchSecretFromGSM(p.Spec.GsmSecretName, p.Spec.GsmSecretVersion)
+        ctx := context.Background()
+        client, err := secretmanager.NewClient(ctx)
         if err != nil {
-                return nil, err
+                return nil, fmt.Errorf("failed to create secretmanager client: %v", err)
+        }
+        defer client.Close()
+
+        secretData := make(map[string]string)
+        for secretKey, gsmSecretName := range p.Spec.SecretMappings {
+                secretValue, err := fetchSecretFromGSM(ctx, client, gsmSecretName)
+                if err != nil {
+                        return nil, err
+                }
+                secretData[secretKey] = secretValue
         }
 
-        // Create a Kubernetes Secret
+        // Create the Kubernetes Secret using the helper functions
         secret := &resource.Resource{
                 RNode: *yaml.NewRNode(&yaml.Node{
                         Kind: yaml.MappingNode,
@@ -87,14 +58,12 @@ func (p *plugin) Generate() (resmap.ResMap, error) {
         secret.SetApiVersion("v1")
         secret.SetKind("Secret")
         secret.SetName(p.Spec.SecretName)
-        secret.SetNamespace(p.ObjectMeta.Namespace) // Set the namespace if available
+        secret.SetNamespace(p.ObjectMeta.Namespace)
 
         // Add the secret data
         err = secret.PipeE(
                 yaml.SetField("type", yaml.NewStringRNode("Opaque")),
-                yaml.SetField("data", yaml.NewMapRNode(&map[string]string{
-                        p.Spec.SecretKey: secretValue,
-                })),
+                yaml.SetField("data", yaml.NewMapRNode(&secretData)),
         )
         if err != nil {
                 return nil, err
@@ -104,19 +73,30 @@ func (p *plugin) Generate() (resmap.ResMap, error) {
         if err := secret.SetAnnotation("secret-source", "google-secret-manager"); err != nil {
                 return nil, err
         }
+
+        // Add the secret to the resource map
         rm := resmap.New()
-
         err = rm.Append(secret)
-        return rm, err
-}
-
-func fetchSecretFromGSM(secretName, secretVersion string) (string, error) {
-        // Execute the fetch-secret.sh script
-        cmd := exec.Command("./fetch-secret.sh", secretName, secretVersion)
-        output, err := cmd.Output()
         if err != nil {
-                return "", fmt.Errorf("failed to fetch secret from GSM: %v", err)
+                return nil, err
         }
 
-        return string(output), nil
+        return rm, nil
+}
+
+func fetchSecretFromGSM(ctx context.Context, client *secretmanager.Client, gsmSecretName string) (string, error) {
+        // Assuming "latest" version for simplicity; you can add version management
+        accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+                Name: gsmSecretName + "/versions/latest",
+        }
+
+        result, err := client.AccessSecretVersion(ctx, accessRequest)
+        if err != nil {
+                return "", fmt.Errorf("failed to access secret version: %v", err)
+        }
+
+        return string(result.Payload.Data), nil
+}
+
+func main() {
 }

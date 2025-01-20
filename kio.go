@@ -101,15 +101,27 @@ func base64Encode(input string) string {
 }
 
 func main() {
-	p := &SecretGenerator{}
-	pipeline := kio.Pipeline{
-		Inputs:  []kio.Reader{&kio.ByteReader{Reader: os.Stdin}},
-		Filters: []kio.Filter{p},
-		Outputs: []kio.Writer{kio.ByteWriter{Writer: os.Stdout}},
-	}
+    p := &SecretGenerator{}
+    pipeline := kio.Pipeline{
+        Inputs: []kio.Reader{&kio.ByteReader{Reader: os.Stdin}},
+        Filters: []kio.Filter{
+            &kio.YAMLMarshaller{
+                KeepReaderAnnotations: true,
+                Sort:                  true,
+                Style:                 yaml.FlowStyle,
+            },
+            p,
+            &kio.YAMLMarshaller{
+                KeepReaderAnnotations: true,
+                Sort:                  true,
+                Style:                 yaml.FlowStyle,
+            },
+        },
+        Outputs: []kio.Writer{&kio.ByteWriter{Writer: os.Stdout, KeepReaderAnnotations: true}},
+    }
 
-	if err := pipeline.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
+    if err := pipeline.Execute(); err != nil {
+        fmt.Fprintf(os.Stderr, "Error executing pipeline: %v\n", err)
+        os.Exit(1)
+    }
 }

@@ -1,0 +1,19 @@
+rules:
+- name: PodRestarts
+  condition: A
+  data:
+  - refID: A
+    queryType: promql
+    relativeTimeRange:
+      from: 5m
+      to: now
+    datasourceUid: -100
+    model:
+      expr: rate(kube_pod_container_status_restarts_total[1m]) > 0
+  noDataState: alertings
+  execErrState: alertings
+  labels:
+    severity: warning
+  annotations:
+    summary: "Pod Restarts"
+    description: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting frequently."

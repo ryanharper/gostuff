@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: example-app-metrics
+  namespace: monitoring
+  labels:
+    release: prometheus # This label can be used by the Prometheus CRD's serviceMonitorSelector
+spec:
+  selector:
+    matchLabels:
+      app: my-example-app # Select services with this label
+  endpoints:
+    - port: http-metrics # The name of the port in the Service that exposes metrics
+      interval: 30s # Scrape interval
+      # Optional: path, scheme, tlsConfig, etc.
+  namespaceSelector:
+    matchNames:
+    - default # Scrape services in the 'default' namespace (adjust as needed)

@@ -1,0 +1,57 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus-mimir
+  namespace: monitoring
+spec:
+  replicas: 1  # Adjust as needed for high availability
+  serviceAccountName: prometheus # Make sure this service account exists and has permissions
+  serviceMonitorSelector: {} # Select all ServiceMonitors in the namespace
+    #  matchLabels:
+    #    team: frontend
+  podMonitorSelector: {}
+  ruleSelector: {} # Selects all PrometheusRules
+  # resource:
+  #   requests:
+  #     memory: "400Mi"
+  #   limits:
+  #     memory: "1Gi"
+  enableRemoteWriteReceiver: false # We *don't* want Prometheus to receive remote writes
+  remoteWrite:
+    - url: "http://mimir-endpoint:9009/api/v1/push" # Replace with your Mimir endpoint
+      # Optional: Configure TLS, authentication, etc. as needed by your Mimir setup
+      # tlsConfig:
+      #   caFile: /path/to/ca.crt
+      #   certFile: /path/to/cert.pem
+      #   keyFile: /path/to/key.pem
+      #   insecureSkipVerify: false
+      # queueConfig:  # Tune these for your expected write throughput and Mimir's capacity
+      #   capacity: 2500  # Max samples per send
+      #   maxShards: 200 # Max number of shards
+      #   minShards: 1
+      #   maxSamplesPerSend: 500
+      #   batchSendDeadLine: 5s  # Max time a sample should wait in the queue
+      #   minBackoff: 30ms
+      #   maxBackoff: 5s
+      #   retryOnRateLimit: true
+  resources:
+    requests:
+      memory: "2Gi" # Adjust based on your expected load.  Start high and reduce.
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "1"
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi # Adjust based on your retention requirements and data volume.
+        storageClassName: standard # Or your preferred storage class
+  # Add other configurations as necessary, like:
+  # - externalLabels:
+  #     cluster: my-k8s-cluster
+  # - retention: 15d
+  # - scrapeInterval: 30s
+  # - evaluationInterval: 30s

@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: prometheus-recording-rules
+  namespace: monitoring
+spec:
+  groups:
+    - name: example-recording-rules
+      rules:
+        - record: job:http_requests_total:rate5m
+          expr: sum(rate(http_requests_total[5m])) by (job)
+
+        - record: node:node_cpu_seconds_total:avg_rate5m
+          expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance)

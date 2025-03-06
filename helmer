@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
@@ -36,13 +35,12 @@ func main() {
 	// 2. Initialize Helm settings
 	settings := cli.New()
 
-
 	// 3. Iterate through configurations
 	for _, helmConfig := range config.Helm {
 		for _, chart := range helmConfig.Charts {
 			for _, destination := range helmConfig.Destinations {
 
-                // 3a. Pull Chart
+				// 3a. Pull Chart
 				// Registry client for pull
 				registryClientPull, err := registry.NewClient(
 					registry.ClientOptDebug(settings.Debug),
@@ -68,9 +66,8 @@ func main() {
 				}
 				log.Printf("Pulled chart %s to %s\n", chart.Name, chartPath)
 
-
 				// 3b. Push Chart
-				// Registry client for push -- can often reuse, but making explicit here
+				// Registry client for push
 				registryClientPush, err := registry.NewClient(
 					registry.ClientOptDebug(settings.Debug),
 					registry.ClientOptEnableCache(true),
@@ -88,7 +85,6 @@ func main() {
 				}
 				actionConfigPush.RegistryClient = registryClientPush
 
-
 				if err := pushChart(settings, chartPath, destination.Path, actionConfigPush); err != nil {
 					log.Printf("Error pushing chart %s to %s: %v", chart.Name, destination.Path, err)
 					continue
@@ -96,8 +92,9 @@ func main() {
 				log.Printf("Pushed chart %s to %s\n", chart.Name, destination.Path)
 
 				// 3c. Clean up temp file
-				os.RemoveAll(chartPath)
-				log.Printf("Chart %s removed temp file located at %s\n", chart.Name, chartPath)
+				if err := os.RemoveAll(chartPath); err != nil {
+					log.Printf("Error cleaning up temp file %s: %v", chartPath, err)
+				}
 			}
 		}
 	}
@@ -121,36 +118,29 @@ func loadConfig(filename string) (*Config, error) {
 
 // pullChart pulls the specified chart from the Helm repository.
 func pullChart(settings *cli.EnvSettings, repoURL, chartName, chartVersion string, actionConfig *action.Configuration) (string, error) {
-
-	//Use pull client
-	pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // Correctly use WithConfig for Pull
+	pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // action.PullOpt
 	pull.Settings = settings
 	pull.RepoURL = repoURL
 	pull.Version = chartVersion
-	pull.DestDir = os.TempDir() // Set the destination to a temp dir
+	pull.DestDir = os.TempDir()
 
-	//Run the pull command
 	result, err := pull.Run(chartName)
 	if err != nil {
 		return "", fmt.Errorf("failed to pull chart: %w", err)
 	}
 	return result.DownloadedPath, nil
-
 }
 
 // pushChart pushes the chart to the OCI registry.
 func pushChart(settings *cli.EnvSettings, chartPath, destination string, actionConfig *action.Configuration) error {
-	// 1. Load the chart
 	_, err := loader.Load(chartPath)
 	if err != nil {
 		return fmt.Errorf("failed to load chart: %w", err)
 	}
 
-	//Create push client
-	push := action.NewPushWithOpts(action.WithConfig(actionConfig))  // Correct
-    push.Settings = settings //  <--- THIS WAS MISSING
+	push := action.NewPushWithOpts(action.WithConfig(actionConfig)) // action.PushOpt
+	push.Settings = settings
 
-	// Push to OCI
 	_, err = push.Run(chartPath, destination)
 	if err != nil {
 		return fmt.Errorf("failed to push chart: %w", err)

@@ -1,0 +1,139 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/registry"
+)
+
+type Config struct {
+	Helm []struct {
+		Repo         string `yaml:"repo"`
+		Charts       []struct {
+			Name    string `yaml:"name"`
+			Version string `yaml:"version"`
+		} `yaml:"charts"`
+		Destinations []struct {
+			Path string `yaml:"path"`
+		} `yaml:"destinations"`
+	} `yaml:"helm"`
+}
+
+func main() {
+	// 1. Load Configuration
+	config, err := loadConfig("config.yaml")
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
+	}
+
+	// 2. Initialize Helm settings and client
+	settings := cli.New()
+	registryClient, err := registry.NewClient(
+		registry.ClientOptDebug(settings.Debug),
+		registry.ClientOptEnableCache(true), // Consider if caching is appropriate for your use case
+		registry.ClientOptWriter(os.Stdout), // Redirect output as needed
+        registry.ClientOptCredentialsFile(settings.RegistryConfig), //Use credentials in registry config
+	)
+	if err != nil {
+		log.Fatalf("Failed to create registry client: %v", err)
+	}
+
+
+    //Set action configuration
+    actionConfig := new(action.Configuration)
+    if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+       log.Fatalf("Failed to init action config: %v", err)
+     }
+    actionConfig.RegistryClient = registryClient
+
+
+	// 3. Iterate through configurations
+	for _, helmConfig := range config.Helm {
+		for _, chart := range helmConfig.Charts {
+			for _, destination := range helmConfig.Destinations {
+				// 3a. Pull Chart
+				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version, actionConfig)
+				if err != nil {
+					log.Printf("Error pulling chart %s: %v", chart.Name, err)
+					continue // Move to the next destination/chart if pull fails
+				}
+				log.Printf("Pulled chart %s to %s\n", chart.Name, chartPath)
+
+				// 3b. Push Chart
+				if err := pushChart(chartPath, destination.Path, actionConfig); err != nil {
+					log.Printf("Error pushing chart %s to %s: %v", chart.Name, destination.Path, err)
+					continue
+				}
+				log.Printf("Pushed chart %s to %s\n", chart.Name, destination.Path)
+
+                // 3c. Clean up temp file
+                os.RemoveAll(chartPath)
+                log.Printf("Chart %s removed temp file located at %s\n", chart.Name, chartPath)
+			}
+		}
+	}
+
+	fmt.Println("Helm operations completed.")
+}
+
+// loadConfig loads the YAML configuration file.
+func loadConfig(filename string) (*Config, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	var config Config
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+// pullChart pulls the specified chart from the Helm repository.
+func pullChart(settings *cli.EnvSettings, repoURL, chartName, chartVersion string, actionConfig *action.Configuration) (string, error) {
+
+	//Use pull client
+    pull := action.NewPullWithOpts(action.WithConfig(actionConfig))
+	pull.Settings = settings
+    pull.RepoURL = repoURL
+    pull.Version = chartVersion
+	pull.DestDir = os.TempDir() // Set the destination to a temp dir
+
+    //Run the pull command
+    result, err := pull.Run(chartName)
+    if err != nil {
+        return "", fmt.Errorf("failed to pull chart: %w", err)
+    }
+    return result.DownloadedPath, nil
+
+}
+
+
+
+// pushChart pushes the chart to the OCI registry.
+func pushChart(chartPath, destination string, actionConfig *action.Configuration) error {
+	// 1. Load the chart
+	chart, err := loader.Load(chartPath)
+	if err != nil {
+		return fmt.Errorf("failed to load chart: %w", err)
+	}
+
+    //Create push client
+    push := action.NewPushWithOpts(action.WithConfig(actionConfig))
+
+    // Push to OCI
+    _, err = push.Run(chartPath, destination)
+    if err != nil {
+        return fmt.Errorf("failed to push chart: %w", err)
+    }
+
+	return nil
+}

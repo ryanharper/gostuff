@@ -42,8 +42,16 @@ func main() {
 		for _, chart := range helmConfig.Charts {
 			for _, destination := range helmConfig.Destinations {
 
+				// --- Create Temporary Directory ---
+				tempDir, err := os.MkdirTemp("", "helm-utility-")
+				if err != nil {
+					log.Fatalf("Failed to create temporary directory: %v", err)
+				}
+				// Defer cleanup *here*, after pushChart
+				defer os.RemoveAll(tempDir)
+
 				// 3a. Pull Chart
-				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version)
+				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version, tempDir) // Pass tempDir
 				if err != nil {
 					log.Printf("Error pulling chart %s: %v", chart.Name, err)
 					continue // Move to the next destination/chart if pull fails
@@ -56,7 +64,7 @@ func main() {
 					registry.ClientOptDebug(settings.Debug),
 					registry.ClientOptEnableCache(true),
 					registry.ClientOptWriter(os.Stdout),
-					registry.ClientOptCredentialsFile(settings.RegistryConfig), // Use credentials
+					registry.ClientOptCredentialsFile(settings.RegistryConfig),
 				)
 				if err != nil {
 					log.Fatalf("Failed to create registry client for push: %v", err)
@@ -64,19 +72,16 @@ func main() {
 
 				//Set action configuration for Push
 				actionConfigPush := new(action.Configuration)
-				// THIS IS IMPORTANT: Pass the registry client to the action configuration!
 				if err := actionConfigPush.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
 					log.Fatalf("Failed to init action config for push: %v", err)
 				}
-				actionConfigPush.RegistryClient = registryClientPush // Assign the client
+				actionConfigPush.RegistryClient = registryClientPush
 
 				if err := pushChart(settings, chartPath, destination.Path, actionConfigPush); err != nil {
 					log.Printf("Error pushing chart %s to %s: %v", chart.Name, destination.Path, err)
 					continue
 				}
 				log.Printf("Pushed chart %s to %s\n", chart.Name, destination.Path)
-
-				// 3c. Clean up temp file  -- NOW DONE IN pullChart
 			}
 		}
 	}
@@ -99,7 +104,7 @@ func loadConfig(filename string) (*Config, error) {
 }
 
 // pullChart pulls the specified chart from the Helm repository.
-func pullChart(settings *cli.EnvSettings, repoAlias, chartName, chartVersion string) (string, error) {
+func pullChart(settings *cli.EnvSettings, repoAlias, chartName, chartVersion string, destDir string) (string, error) {
 	// --- Resolve the repository URL ---
 	repoFile, err := repo.LoadFile(settings.RepositoryConfig)
 	if err != nil {
@@ -121,7 +126,7 @@ func pullChart(settings *cli.EnvSettings, repoAlias, chartName, chartVersion str
 	pull.Settings = settings
 	pull.RepoURL = repoURL
 	pull.Version = chartVersion
-	pull.DestDir = os.TempDir() // Download to a temporary directory
+	pull.DestDir = destDir // Use the provided destDir
 
 	// --- Set Credentials ---
 	pull.Username = repoEntry.Username
@@ -134,11 +139,7 @@ func pullChart(settings *cli.EnvSettings, repoAlias, chartName, chartVersion str
 	}
 
 	// --- Construct Full Path ---
-	// result.DownloadedPath is relative to pull.DestDir, so we need to join them.
 	fullChartPath := filepath.Join(pull.DestDir, result.DownloadedPath)
-
-	// --- Immediate Cleanup ---
-	defer os.RemoveAll(filepath.Dir(fullChartPath)) // Clean up the temp dir after this function
 
 	return fullChartPath, nil // Return the *full* path
 }

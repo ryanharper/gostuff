@@ -11,6 +11,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v3/pkg/repo"
 )
 
 type Config struct {
@@ -101,33 +102,41 @@ func loadConfig(filename string) (*Config, error) {
 }
 
 // pullChart pulls the specified chart from the Helm repository.
-func pullChart(settings *cli.EnvSettings, repoURL, chartName, chartVersion string) (string, error) {
-    // Set up the action configuration.  This is how we provide credentials.
-    actionConfig := new(action.Configuration)
-    if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
-        return "", fmt.Errorf("failed to initialize action config: %w", err)
-    }
+func pullChart(settings *cli.EnvSettings, repoAlias, chartName, chartVersion string) (string, error) {
+	// --- Resolve the repository URL ---
+	repoFile, err := repo.LoadFile(settings.RepositoryConfig) // Load Helm's repo config
+	if err != nil {
+		return "", fmt.Errorf("failed to load repository config: %w", err)
+	}
 
-    pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // Use WithConfig
-    pull.Settings = settings  // Pass the settings object
-    pull.RepoURL = repoURL
-    pull.Version = chartVersion
-    pull.DestDir = os.TempDir()
+	repoEntry := repoFile.Get(repoAlias) // Look up by alias
+	if repoEntry == nil {
+		return "", fmt.Errorf("repository '%s' not found in Helm config", repoAlias)
+	}
+	repoURL := repoEntry.URL // Get the full URL
+    // --- End URL Resolution ---
+	actionConfig := new(action.Configuration)
+	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+		return "", fmt.Errorf("failed to initialize action config: %w", err)
+	}
 
-    // Set credentials if available.  This is the key part for authentication.
-    pull.Username = settings.RegistryConfig // This and below lines are new
+	pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // Use WithConfig
+	pull.Settings = settings
+	pull.RepoURL = repoURL      // Use the *resolved* URL here!
+	pull.Version = chartVersion
+	pull.DestDir = os.TempDir()
+	pull.Username = settings.RegistryConfig
 	pull.Password, err = settings.GetPassword(repoURL)
 	if err != nil{
+		//Dont error here as it could just not exists
 		log.Printf("failed to get password for %s", repoURL)
 	}
-    pull.PassCredentialsAll = true
-
-
-    result, err := pull.Run(chartName)
-    if err != nil {
-        return "", fmt.Errorf("failed to pull chart: %w", err)
-    }
-    return result.DownloadedPath, nil
+	pull.PassCredentialsAll = true
+	result, err := pull.Run(chartName)
+	if err != nil {
+		return "", fmt.Errorf("failed to pull chart: %w", err)
+	}
+	return result.DownloadedPath, nil
 }
 
 // pushChart pushes the chart to the OCI registry.

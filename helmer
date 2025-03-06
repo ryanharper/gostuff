@@ -43,7 +43,7 @@ func main() {
 			for _, destination := range helmConfig.Destinations {
 
 				// 3a. Pull Chart
-				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version) // Pass settings directly
+				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version)
 				if err != nil {
 					log.Printf("Error pulling chart %s: %v", chart.Name, err)
 					continue // Move to the next destination/chart if pull fails
@@ -104,34 +104,33 @@ func loadConfig(filename string) (*Config, error) {
 // pullChart pulls the specified chart from the Helm repository.
 func pullChart(settings *cli.EnvSettings, repoAlias, chartName, chartVersion string) (string, error) {
 	// --- Resolve the repository URL ---
-	repoFile, err := repo.LoadFile(settings.RepositoryConfig) // Load Helm's repo config
+	repoFile, err := repo.LoadFile(settings.RepositoryConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to load repository config: %w", err)
 	}
 
-	repoEntry := repoFile.Get(repoAlias) // Look up by alias
+	repoEntry := repoFile.Get(repoAlias)
 	if repoEntry == nil {
 		return "", fmt.Errorf("repository '%s' not found in Helm config", repoAlias)
 	}
-	repoURL := repoEntry.URL // Get the full URL
-    // --- End URL Resolution ---
+	repoURL := repoEntry.URL
+
 	actionConfig := new(action.Configuration)
 	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
 		return "", fmt.Errorf("failed to initialize action config: %w", err)
 	}
 
-	pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // Use WithConfig
+	pull := action.NewPullWithOpts(action.WithConfig(actionConfig))
 	pull.Settings = settings
-	pull.RepoURL = repoURL      // Use the *resolved* URL here!
+	pull.RepoURL = repoURL
 	pull.Version = chartVersion
 	pull.DestDir = os.TempDir()
-	pull.Username = settings.RegistryConfig
-	pull.Password, err = settings.GetPassword(repoURL)
-	if err != nil{
-		//Dont error here as it could just not exists
-		log.Printf("failed to get password for %s", repoURL)
-	}
-	pull.PassCredentialsAll = true
+
+	// --- Set Credentials ---
+	pull.Username = repoEntry.Username      // Get username from repo entry
+	pull.Password = repoEntry.Password      // Get password from repo entry
+	pull.PassCredentialsAll = repoEntry.PassCredentialsAll
+
 	result, err := pull.Run(chartName)
 	if err != nil {
 		return "", fmt.Errorf("failed to pull chart: %w", err)

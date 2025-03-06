@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
@@ -41,25 +42,7 @@ func main() {
 			for _, destination := range helmConfig.Destinations {
 
 				// 3a. Pull Chart
-				// Registry client for pull
-				registryClientPull, err := registry.NewClient(
-					registry.ClientOptDebug(settings.Debug),
-					registry.ClientOptEnableCache(true),
-					registry.ClientOptWriter(os.Stdout),
-					registry.ClientOptCredentialsFile(settings.RegistryConfig),
-				)
-				if err != nil {
-					log.Fatalf("Failed to create registry client for pull: %v", err)
-				}
-
-				//Set action configuration for Pull
-				actionConfigPull := new(action.Configuration)
-				if err := actionConfigPull.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
-					log.Fatalf("Failed to init action config for pull: %v", err)
-				}
-				actionConfigPull.RegistryClient = registryClientPull
-
-				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version, actionConfigPull)
+				chartPath, err := pullChart(settings, helmConfig.Repo, chart.Name, chart.Version) // Pass settings directly
 				if err != nil {
 					log.Printf("Error pulling chart %s: %v", chart.Name, err)
 					continue // Move to the next destination/chart if pull fails
@@ -72,7 +55,7 @@ func main() {
 					registry.ClientOptDebug(settings.Debug),
 					registry.ClientOptEnableCache(true),
 					registry.ClientOptWriter(os.Stdout),
-					registry.ClientOptCredentialsFile(settings.RegistryConfig),
+					registry.ClientOptCredentialsFile(settings.RegistryConfig), // Use credentials
 				)
 				if err != nil {
 					log.Fatalf("Failed to create registry client for push: %v", err)
@@ -80,10 +63,11 @@ func main() {
 
 				//Set action configuration for Push
 				actionConfigPush := new(action.Configuration)
+				// THIS IS IMPORTANT: Pass the registry client to the action configuration!
 				if err := actionConfigPush.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
 					log.Fatalf("Failed to init action config for push: %v", err)
 				}
-				actionConfigPush.RegistryClient = registryClientPush
+				actionConfigPush.RegistryClient = registryClientPush // Assign the client
 
 				if err := pushChart(settings, chartPath, destination.Path, actionConfigPush); err != nil {
 					log.Printf("Error pushing chart %s to %s: %v", chart.Name, destination.Path, err)
@@ -117,18 +101,33 @@ func loadConfig(filename string) (*Config, error) {
 }
 
 // pullChart pulls the specified chart from the Helm repository.
-func pullChart(settings *cli.EnvSettings, repoURL, chartName, chartVersion string, actionConfig *action.Configuration) (string, error) {
-	pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // action.PullOpt
-	pull.Settings = settings
-	pull.RepoURL = repoURL
-	pull.Version = chartVersion
-	pull.DestDir = os.TempDir()
+func pullChart(settings *cli.EnvSettings, repoURL, chartName, chartVersion string) (string, error) {
+    // Set up the action configuration.  This is how we provide credentials.
+    actionConfig := new(action.Configuration)
+    if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+        return "", fmt.Errorf("failed to initialize action config: %w", err)
+    }
 
-	result, err := pull.Run(chartName)
-	if err != nil {
-		return "", fmt.Errorf("failed to pull chart: %w", err)
+    pull := action.NewPullWithOpts(action.WithConfig(actionConfig)) // Use WithConfig
+    pull.Settings = settings  // Pass the settings object
+    pull.RepoURL = repoURL
+    pull.Version = chartVersion
+    pull.DestDir = os.TempDir()
+
+    // Set credentials if available.  This is the key part for authentication.
+    pull.Username = settings.RegistryConfig // This and below lines are new
+	pull.Password, err = settings.GetPassword(repoURL)
+	if err != nil{
+		log.Printf("failed to get password for %s", repoURL)
 	}
-	return result.DownloadedPath, nil
+    pull.PassCredentialsAll = true
+
+
+    result, err := pull.Run(chartName)
+    if err != nil {
+        return "", fmt.Errorf("failed to pull chart: %w", err)
+    }
+    return result.DownloadedPath, nil
 }
 
 // pushChart pushes the chart to the OCI registry.
@@ -138,7 +137,7 @@ func pushChart(settings *cli.EnvSettings, chartPath, destination string, actionC
 		return fmt.Errorf("failed to load chart: %w", err)
 	}
 
-	push := action.NewPushWithOpts(action.WithConfig(actionConfig)) // action.PushOpt
+	push := action.NewPushWithOpts(action.WithPushConfig(actionConfig))
 	push.Settings = settings
 
 	_, err = push.Run(chartPath, destination)

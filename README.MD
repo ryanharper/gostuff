@@ -1,3 +1,75 @@
+```mermaid
+%% Font Awesome CDN for icons
+%%{init: {'fontFamily': 'Fira Sans', 'theme': 'base', 'themeVariables': { 'primaryColor': '#F4F4F4', 'edgeLabelBackground': '#F4F4F4', 'clusterBkg': '#E0E0E0'}}}%%
+graph TD
+    %% Define FontAwesome URL
+    %% This is a bit of a hack for some renderers, but helps ensure icons load
+    A[ ] -...-> B[ ]
+    style A fill:none,stroke:none
+    style B fill:none,stroke:none
+    linkStyle 0 stroke-width:0;
+
+
+    subgraph "Data Sources"
+        direction LR
+        node_exporter["<div style='padding: 10px; text-align: center;'><i class='fa fa-server fa-2x'></i><br/>Node Exporter</div>"]
+        cadvisor["<div style='padding: 10px; text-align: center;'><i class='fab fa-docker fa-2x'></i><br/>cAdvisor</div>"]
+        blackbox["<div style='padding: 10px; text-align: center;'><i class='fa fa-search-plus fa-2x'></i><br/>Blackbox Exporter</div>"]
+        apps["<div style='padding: 10px; text-align: center;'><i class='fa fa-cogs fa-2x'></i><br/>Applications</div>"]
+    end
+
+    subgraph "OpenTelemetry Collectors"
+        otel_metrics["<div style='padding: 10px; text-align: center;'><i class='fa fa-stream fa-2x'></i><br/>OTel Cluster Metrics</div>"]
+        otel_logs["<div style='padding: 10px; text-align: center;'><i class='fa fa-stream fa-2x'></i><br/>OTel Cluster Logs</div>"]
+        otel_apps["<div style='padding: 10px; text-align: center;'><i class='fa fa-stream fa-2x'></i><br/>OTel for Apps</div>"]
+        otel_gateway["<div style='padding: 10px; text-align: center;'><i class='fa fa-door-open fa-2x'></i><br/>OTel Gateway</div>"]
+    end
+
+
+    subgraph "Backend Storage (MALT)"
+        direction LR
+        mimir([<div style='padding: 10px; text-align: center;'><i class='fa fa-database fa-2x'></i><br/>Mimir</div>])
+        loki([<div style='padding: 10px; text-align: center;'><i class='fa fa-file-alt fa-2x'></i><br/>Loki</div>])
+        tempo([<div style='padding: 10px; text-align: center;'><i class='fa fa-stopwatch fa-2x'></i><br/>Tempo</div>])
+    end
+
+    subgraph "Visualization"
+         grafana["<div style='padding: 10px; text-align: center;'><i class='fa fa-chart-bar fa-2x'></i><br/>Grafana</div>"]
+    end
+
+    %% Connections
+    node_exporter -- "Host Metrics" --> otel_metrics
+    cadvisor -- "Container Metrics" --> otel_metrics
+    blackbox -- "Endpoint Probes" --> otel_metrics
+
+    apps -- "Logs, Metrics, Traces" --> otel_apps
+
+    otel_metrics -- "Cluster Metrics" --> otel_gateway
+    otel_logs -- "Cluster Logs" --> otel_gateway
+    otel_apps -- "App Telemetry" --> otel_gateway
+
+    otel_gateway --> mimir
+    otel_gateway --> loki
+    otel_gateway --> tempo
+
+    mimir -- "Metrics" --> grafana
+    loki -- "Logs" --> grafana
+    tempo -- "Traces" --> grafana
+
+    %% Styling
+    linkStyle default interpolate basis
+    classDef sources fill:#2980B9,stroke:#ECF0F1,color:#ECF0F1,stroke-width:2px,rx:8,ry:8
+    classDef otel fill:#16A085,stroke:#ECF0F1,color:#ECF0F1,stroke-width:2px,rx:8,ry:8
+    classDef backend fill:#8E44AD,stroke:#ECF0F1,color:#ECF0F1,stroke-width:2px,rx:8,ry:8
+    classDef viz fill:#D35400,stroke:#ECF0F1,color:#ECF0F1,stroke-width:2px,rx:8,ry:8
+
+    class node_exporter,cadvisor,blackbox,apps sources;
+    class otel_gateway,otel_apps,otel_metrics,otel_logs otel;
+    class mimir,loki,tempo backend;
+    class grafana viz;
+
+```
+
 ```
 import (
 	"regexp"

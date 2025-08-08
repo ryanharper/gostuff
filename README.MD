@@ -1373,7 +1373,25 @@ func main() {
         fmt.Println()
     }
 }
+```
 
+```
+{{- $root := . }}
+{{- range $path, $bytes := .Files.Glob "dashboards/**.json" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" $root.Release.Name (base $path | trimSuffix ".json") | trunc 63 | trimSuffix "-" }}
+  labels:
+    app.kubernetes.io/name: grafana-dashboard
+    app.kubernetes.io/instance: {{ $root.Release.Name }}
+    dashboard-folder: {{ dir $path }}
+data:
+  {{ base $path }}: |
+{{ $root.Files.Get $path | indent 4 }}
+---
+{{- end }}
+```
 
 
 

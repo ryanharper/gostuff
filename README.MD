@@ -1,3 +1,135 @@
+```yaml
+# This values.yaml configures the opentelemetry-collector Helm chart
+# to run as a highly available, stateful gateway.
+
+# Set the deployment mode to 'statefulset'. This is the key to enabling
+# stable pod identities and persistent storage. [1, 2]
+mode: statefulset
+
+# Run multiple replicas for high availability and load distribution.
+# A minimum of 3 is recommended for production environments. [3, 4]
+replicaCount: 3
+
+# Use the 'contrib' distribution image to ensure all necessary components,
+# like the filestorage extension and k8sattributes processor, are available. [1, 5]
+image:
+  repository: otel/opentelemetry-collector-contrib
+  # It's recommended to use a recent, stable version.
+  tag: 0.100.0
+
+# The 'statefulset' block allows for configuring StatefulSet-specific properties.
+# The 'volumeClaimTemplates' section is the standard Kubernetes way to provide
+# each replica with its own persistent volume. [6, 7]
+statefulset:
+  volumeClaimTemplates:
+    - metadata:
+        # This name is used to create the PersistentVolumeClaim for each pod.
+        name: otel-gateway-storage
+      spec:
+        accessModes:
+        # Ensure you have a StorageClass available in your cluster.
+        storageClassName: "standard"
+        resources:
+          requests:
+            # Allocate sufficient disk space for the persistent queue.
+            storage: 20Gi
+
+# Mount the persistent volume into the collector container. The 'name' must
+# match the 'name' from the volumeClaimTemplates metadata above.
+volumeMounts:
+  - name: otel-gateway-storage
+    mountPath: /var/lib/otelcol/data
+
+# This section defines the collector's core configuration (config.yaml).
+config:
+  extensions:
+    # The filestorage extension enables the disk-backed persistent queue. [8, 9]
+    # Its directory must match the 'mountPath' from the volumeMounts.
+    filestorage:
+      directory: /var/lib/otelcol/data
+
+    # Standard extensions for production readiness and debugging.
+    health_check:
+    pprof:
+
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  processors:
+    # 1. memory_limiter: MUST be the first processor. It acts as the primary
+    #    defense against memory exhaustion and applies backpressure. [10]
+    memory_limiter:
+      check_interval: 1s
+      # Use percentage-based limits, which are ideal for containerized environments.
+      # Adjust based on the resource limits set for your pods.
+      limit_percentage: 80
+      spike_limit_percentage: 20
+
+    # 2. k8sattributes: Enriches telemetry with Kubernetes metadata. Essential
+    #    for a gateway to add context to data from various sources. [5, 11]
+    k8sattributes:
+      passthrough: false
+      auth_type: "kubeConfig"
+      extract:
+        metadata:
+          - k8s.pod.name
+          - k8s.pod.uid
+          - k8s.deployment.name
+          - k8s.namespace.name
+          - k8s.node.name
+
+    # 3. batch: Groups data for more efficient compression and export.
+    batch:
+      # A gateway with more resources can often handle larger batches.
+      send_batch_size: 8192
+      send_batch_max_size: 8192
+      timeout: 5s
+
+  exporters:
+    # Replace this with your actual backend exporter configuration.
+    otlphttp:
+      endpoint: "https://your-observability-backend.com:443"
+      # The sending_queue is critical for resilience.
+      sending_queue:
+        enabled: true
+        # Use the 'filestorage' extension for a persistent Write-Ahead Log (WAL).
+        # This makes the queue durable across pod restarts, which is the primary
+        # reason for using a StatefulSet. [8, 3]
+        storage: filestorage
+        # A large queue size allows buffering during extended backend outages.
+        queue_size: 50000
+      retry_on_failure:
+        enabled: true
+        max_elapsed_time: 15m # Retry for 15 minutes before dropping data.
+
+  service:
+    extensions: [health_check, pprof, filestorage]
+    pipelines:
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, batch]
+        exporters: [otlphttp]
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, batch]
+        exporters: [otlphttp]
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, batch]
+        exporters: [otlphttp]
+    # Enable self-monitoring of the collector gateway fleet.
+    telemetry:
+      metrics:
+        address: 0.0.0.0:8888
+```
+
+
+
 ```mermaid
 %% Font Awesome CDN for icons
 %%{init: {'fontFamily': 'Fira Sans', 'theme': 'base', 'themeVariables': { 'primaryColor': '#F4F4F4', 'edgeLabelBackground': '#F4F4F4', 'clusterBkg': '#E0E0E0'}}}%%

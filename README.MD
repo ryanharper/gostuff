@@ -1,4 +1,68 @@
 ```yaml
+extensions:
+  basicauth/internal_metrics:
+    client_auth:
+      username: "your-username"  # Use environment variables or secrets in production
+      password: "your-password"  # Use environment variables or secrets in production
+
+# 2. Define receivers for incoming data
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+  kubeletstats:
+    collection_interval: 10s
+    auth_type: "serviceAccount"
+    endpoint: "${env:K8S_NODE_NAME}:10250"
+    insecure_skip_verify: true
+    metric_groups:
+      - container
+      - pod
+      - node
+      - volume
+
+# 3. Define processors for data transformation
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 15
+  batch:
+  resourcedetection:
+    detectors: [env, system, eks]
+    override: true
+  resource/rename_cluster:
+    attributes:
+      - key: k8s.cluster.name
+        value: "prod-cluster-project-alpha"
+        action: upsert
+
+# 4. Define exporters for sending data
+exporters:
+  otlp:
+    endpoint: "your-backend-endpoint:4317"
+
+# 5. Define the service and pipelines
+service:
+  # Enable the extensions
+  extensions: [basicauth/internal_metrics]
+
+  # Configure internal telemetry
+  telemetry:
+    metrics:
+      level: "normal"
+      readers:
+        - periodic:
+            interval: 60s
+            exporter:
+              otlp:
+                protocol: http/protobuf
+                endpoint: "your-internal-metrics-endpoint:4318"
+                auth:
+                  authenticator: basicauth/internal_metrics
+```
+```yaml
 # This values.yaml configures the opentelemetry-collector Helm chart
 # to run as a highly available, stateful gateway.
 

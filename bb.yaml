@@ -1,0 +1,85 @@
+groups:
+- name: blackbox.alerts
+  rules:
+
+  # -------------------------------------------------------------------------------------
+  # Rule: Alert when a probe fails entirely.
+  # This is the most critical alert, indicating the target is unreachable or misconfigured.
+  # -------------------------------------------------------------------------------------
+  - alert: BlackboxProbeFailed
+    expr: probe_success == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Probe failed for {{ $labels.instance }}"
+      description: "The Blackbox probe for job '{{ $labels.job }}' targeting '{{ $labels.instance }}' has been failing for the last minute. The endpoint may be down or there is a network issue."
+
+  # -------------------------------------------------------------------------------------
+  # Rule: Alert when an HTTP probe returns a non-2xx status code.
+  # This catches application-level errors (e.g., 404 Not Found, 500 Internal Server Error).
+  # -------------------------------------------------------------------------------------
+  - alert: BlackboxHTTPStatusCodeIsNot2xx
+    expr: probe_http_status_code <= 199 OR probe_http_status_code >= 300
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Received non-2xx HTTP status code for {{ $labels.instance }}"
+      description: "The HTTP probe for '{{ $labels.instance }}' is returning a status code of {{ $value }}. This indicates a server-side or client-side error."
+
+  # -------------------------------------------------------------------------------------
+  # Rule: Alert for slow HTTP responses.
+  # This helps detect performance degradation before it becomes a full outage.
+  # Adjust the '1s' threshold based on your service's expected performance.
+  # -------------------------------------------------------------------------------------
+  - alert: BlackboxSlowProbe
+    expr: probe_duration_seconds > 1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow probe detected for {{ $labels.instance }}"
+      description: "The probe for '{{ $labels.instance }}' took {{ $value | printf \"%.2f\" }}s to complete, which is longer than the 1s threshold. The service may be experiencing performance issues."
+
+  # -------------------------------------------------------------------------------------
+  # Rule: Alert when an SSL certificate is expiring soon (e.g., within 14 days).
+  # This gives you a two-week notice to renew the certificate.
+  # -------------------------------------------------------------------------------------
+  - alert: BlackboxSSLCertificateWillExpireSoon
+    # The metric 'probe_ssl_earliest_cert_expiry' is a Unix timestamp.
+    # We subtract time() to get the seconds until expiry.
+    # 1209600 seconds = 14 days
+    expr: probe_ssl_earliest_cert_expiry - time() < 1209600
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "SSL certificate for {{ $labels.instance }} is expiring soon"
+      description: "The SSL certificate for '{{ $labels.instance }}' will expire in less than 14 days. Please renew it to avoid service disruption."
+
+  # -------------------------------------------------------------------------------------
+  # Rule: More critical alert for an SSL certificate expiring very soon (e.g., within 3 days).
+  # -------------------------------------------------------------------------------------
+  - alert: BlackboxSSLCertificateWillExpireImminently
+    # 259200 seconds = 3 days
+    expr: probe_ssl_earliest_cert_expiry - time() < 259200
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "SSL certificate for {{ $labels.instance }} is expiring imminently"
+      description: "CRITICAL: The SSL certificate for '{{ $labels.instance }}' will expire in less than 3 days. Immediate action is required to prevent an outage."
+
+  # -------------------------------------------------------------------------------------
+  # Rule: Alert for slow DNS resolution.
+  # This can indicate a problem with your DNS provider or network configuration.
+  # -------------------------------------------------------------------------------------
+  - alert: BlackboxSlowDNSLookup
+    expr: probe_dns_lookup_time_seconds > 0.2
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow DNS lookup for {{ $labels.instance }}"
+      description: "DNS resolution for '{{ $labels.instance }}' took {{ $value | printf \"%.2f\" }}s, which is longer than the 0.2s threshold. This could indicate a DNS infrastructure problem."

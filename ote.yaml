@@ -4,6 +4,9 @@ processors:
     metric_statements:
       - context: datapoint
         statements:
+          - set(attributes["exception.message"], "[REDACTED_SQL_QUERY]")(
+            where: IsMatch(attributes["exception.message"], "(?i).*(SELECT|INSERT|UPDATE|DELETE).*")
+          )
           # Replace the attribute value with a static string if it contains SQL keywords.
           # CHANGE "exception.message" to the actual attribute name in your metric.
           - set(attributes["exception.message"], "REDACTED_SQL_QUERY") where attributes["exception.message"] IsMatch "(?i).*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|TRUNCATE).*"

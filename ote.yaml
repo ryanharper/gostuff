@@ -1,0 +1,9 @@
+processors:
+  transform/redact_sql_metrics:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Replace the attribute value with a static string if it contains SQL keywords.
+          # CHANGE "exception.message" to the actual attribute name in your metric.
+          - set(attributes["exception.message"], "REDACTED_SQL_QUERY") where attributes["exception.message"] IsMatch "(?i).*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|TRUNCATE).*"

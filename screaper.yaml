@@ -1,0 +1,35 @@
+scrape_configs:
+        # Scrape Config for Loki, Tempo, and Mimir components
+        - job_name: 'observability-backend'
+          scrape_interval: 15s
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            # 1. Only scrape pods that have the standard label 'app.kubernetes.io/name' 
+            #    matching your tools. Adjust these names based on your Helm chart labels.
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+              action: keep
+              regex: (loki|tempo|mimir|grafana-mimir-.*|loki-.*)
+            
+            # 2. Alternatively, trust the standard scrape annotation (Recommended)
+            # - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            #   action: keep
+            #   regex: true
+
+            # 3. Map the pod IP to the instance label
+            - source_labels: [__meta_kubernetes_pod_ip]
+              action: replace
+              target_label: instance
+
+            # 4. Extract the component name to a readable 'job' label
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+              action: replace
+              target_label: component
+            
+            # 5. Add namespace metadata
+            - source_labels: [__meta_kubernetes_namespace]
+              action: replace
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              action: replace
+              target_label: pod

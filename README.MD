@@ -1,5 +1,6 @@
 ```yaml
 qwen3-next-80b-a3b-instruct
+text-embedding-nomic-embed-text-v1.5
 
 
 

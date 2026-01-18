@@ -1,4 +1,8 @@
 ```yaml
+qwen3-next-80b-a3b-instruct
+
+
+
 extensions:
   basicauth/internal_metrics:
     client_auth:

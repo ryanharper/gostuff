@@ -1,7 +1,7 @@
 ```yaml
 qwen3-next-80b-a3b-instruct
 text-embedding-nomic-embed-text-v1.5
-
+deepseek/deepseek-r1-0528-qwen3-8b
 
 
 extensions:

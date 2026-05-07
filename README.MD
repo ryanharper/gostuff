@@ -1,4 +1,4 @@
-```
+```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#FADE81', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
 graph TD
     %% Node definitions

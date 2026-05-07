@@ -1,1 +1,105 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" version="21.2.3" type="device">
+  <diagram name="Grafana Cascading Config" id="grafana_config_flow">
+    <mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
 
+        <!-- Legend / Precedence Key -->
+        <mxCell id="Legend" value="&lt;b&gt;Precedence Key&lt;/b&gt;&lt;hr&gt;4. Host &amp;gt; 3. App &amp;gt; 2. Environment &amp;gt; 1. Base" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#f5f5f5;strokeColor=#9e9e9e;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="240" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Start Node -->
+        <mxCell id="Start" value="Start: Configuration Process" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="320" y="30" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Configuration Layers (Blue) -->
+        <mxCell id="LayerBase" value="&lt;b&gt;1. Base Configuration&lt;/b&gt;&lt;br/&gt;(e.g., grafana.ini)&lt;br/&gt;Global defaults" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="160" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="LayerEnv" value="&lt;b&gt;2. Environment Overrides&lt;/b&gt;&lt;br/&gt;(e.g., prod, staging)&lt;br/&gt;Apply to env apps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="220" y="120" width="160" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="LayerApp" value="&lt;b&gt;3. App/Service Overrides&lt;/b&gt;&lt;br/&gt;(e.g., Billing, Auth)&lt;br/&gt;Logical application" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="120" width="160" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="LayerHost" value="&lt;b&gt;4. Host Specific Overrides&lt;/b&gt;&lt;br/&gt;(e.g., specific VM)&lt;br/&gt;Final, specific settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="580" y="120" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Process Nodes (Yellow Dashed) -->
+        <mxCell id="Process1" value="Merge&lt;br/&gt;Layer 1 &amp;amp; 2" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#fbc02d;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="150" y="240" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Process2" value="Merge&lt;br/&gt;Result 1 &amp;amp; Layer 3" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#fbc02d;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="270" y="460" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Process3" value="Merge&lt;br/&gt;Result 2 &amp;amp; Layer 4" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#fbc02d;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="430" y="680" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Result Nodes (Green) -->
+        <mxCell id="Result1" value="Config with&lt;br/&gt;Env Overrides" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="130" y="360" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Result2" value="Config with&lt;br/&gt;App Overrides" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="260" y="580" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Final Runtime Output (Green Bold) -->
+        <mxCell id="FinalConfig" value="&lt;b&gt;Final Runtime Configuration&lt;/b&gt;&lt;br/&gt;applied to Grafana Instance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="410" y="800" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Edges (Connecting Flow) -->
+        <!-- Layer Base -> Process 1 -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="LayerBase" target="Process1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Layer Env -> Process 1 -->
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="LayerEnv" target="Process1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Process 1 -> Result 1 -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="Process1" target="Result1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Result 1 -> Process 2 -->
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="Result1" target="Process2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Layer App -> Process 2 -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="LayerApp" target="Process2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Process 2 -> Result 2 -->
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="Process2" target="Result2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Result 2 -> Process 3 -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="Result2" target="Process3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Layer Host -> Process 3 -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;" edge="1" parent="1" source="LayerHost" target="Process3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Process 3 -> Final Config -->
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" edge="1" parent="1" source="Process3" target="FinalConfig">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

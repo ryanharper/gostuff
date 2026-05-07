@@ -1,3 +1,68 @@
+```
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#FADE81', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
+graph TD
+    %% Node definitions
+    Start(Start: Configuration Process)
+    FinalConfig[<b>Final Runtime Configuration</b><br/>applied to Grafana Instance]
+
+    %% Configuration Layers
+    LayerBase[<b>1. Base Configuration</b><br/>(e.g., grafana.ini, defaults.ini)<br/>Global defaults]
+    LayerEnv[<b>2. Environment Overrides</b><br/>(e.g., production, staging, dev)<br/>Apply to all apps in environment]
+    LayerApp[<b>3. App/Service Overrides</b><br/>(e.g., Billing, Auth)<br/>Specific to a logical application]
+    LayerHost[<b>4. Host Specific Overrides</b><br/>(e.g., specific VM, container instance)<br/>Final, specific settings]
+
+    %% Process Nodes (using subgraphs for visual grouping)
+    subgraph MergingProcess [Cascading Merge & Override]
+        direction TB
+        Process1{Merge<br/>Layer 1 & 2}
+        Result1[Config with Env Overrides]
+        Process2{Merge<br/>Result 1 & Layer 3}
+        Result2[Config with App Overrides]
+        Process3{Merge<br/>Result 2 & Layer 4}
+    end
+
+    %% Key for understanding precedence
+    subgraph Key [Precedence Key]
+        direction LR
+        K4(4. Host) -->|> overrides | K3(3. App)
+        K3 -->|> overrides | K2(2. Env)
+        K2 -->|> overrides | K1(1. Base)
+    end
+
+    %% Connections showing the flow of data
+    Start --> LayerBase
+    Start --> LayerEnv
+    Start --> LayerApp
+    Start --> LayerHost
+
+    %% Connecting layers to process
+    LayerBase -->|Base values| Process1
+    LayerEnv -->|Environment values| Process1
+
+    Process1 -->|Result| Result1
+    Result1 -->|Combined values| Process2
+    LayerApp -->|App values| Process2
+
+    Process2 -->|Result| Result2
+    Result2 -->|Combined values| Process3
+    LayerHost -->|Host values| Process3
+
+    %% Output
+    Process3 -->|Final Result| FinalConfig
+
+    %% Styling
+    classDef config fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef process fill:#fff9c4,stroke:#fbc02d,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef result fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,rx:10,ry:10;
+    classDef key fill:#f5f5f5,stroke:#9e9e9e,stroke-width:1px;
+
+    class LayerBase,LayerEnv,LayerApp,LayerHost config;
+    class Process1,Process2,Process3 process;
+    class Result1,Result2,FinalConfig result;
+    class Key,K1,K2,K3,K4 key;
+```
+
+
 ```yaml
 qwen3-next-80b-a3b-instruct
 text-embedding-nomic-embed-text-v1.5

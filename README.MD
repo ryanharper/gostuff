@@ -2,31 +2,31 @@
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#FADE81', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
 graph TD
     %% Node definitions
-    Start(Start: Configuration Process)
-    FinalConfig[<b>Final Runtime Configuration</b><br/>applied to Grafana Instance]
+    Start("Start: Configuration Process")
+    FinalConfig["<b>Final Runtime Configuration</b><br/>applied to Grafana Instance"]
 
     %% Configuration Layers
-    LayerBase[<b>1. Base Configuration</b><br/>(e.g., grafana.ini, defaults.ini)<br/>Global defaults]
-    LayerEnv[<b>2. Environment Overrides</b><br/>(e.g., production, staging, dev)<br/>Apply to all apps in environment]
-    LayerApp[<b>3. App/Service Overrides</b><br/>(e.g., Billing, Auth)<br/>Specific to a logical application]
-    LayerHost[<b>4. Host Specific Overrides</b><br/>(e.g., specific VM, container instance)<br/>Final, specific settings]
+    LayerBase["<b>1. Base Configuration</b><br/>(e.g., grafana.ini, defaults.ini)<br/>Global defaults"]
+    LayerEnv["<b>2. Environment Overrides</b><br/>(e.g., production, staging, dev)<br/>Apply to all apps in environment"]
+    LayerApp["<b>3. App/Service Overrides</b><br/>(e.g., Billing, Auth)<br/>Specific to a logical application"]
+    LayerHost["<b>4. Host Specific Overrides</b><br/>(e.g., specific VM, container instance)<br/>Final, specific settings"]
 
     %% Process Nodes (using subgraphs for visual grouping)
     subgraph MergingProcess [Cascading Merge & Override]
         direction TB
-        Process1{Merge<br/>Layer 1 & 2}
-        Result1[Config with Env Overrides]
-        Process2{Merge<br/>Result 1 & Layer 3}
-        Result2[Config with App Overrides]
-        Process3{Merge<br/>Result 2 & Layer 4}
+        Process1{"Merge<br/>Layer 1 & 2"}
+        Result1["Config with Env Overrides"]
+        Process2{"Merge<br/>Result 1 & Layer 3"}
+        Result2["Config with App Overrides"]
+        Process3{"Merge<br/>Result 2 & Layer 4"}
     end
 
     %% Key for understanding precedence
     subgraph Key [Precedence Key]
         direction LR
-        K4(4. Host) -->|> overrides | K3(3. App)
-        K3 -->|> overrides | K2(2. Env)
-        K2 -->|> overrides | K1(1. Base)
+        K4("4. Host") -->|> overrides | K3("3. App")
+        K3 -->|> overrides | K2("2. Env")
+        K2 -->|> overrides | K1("1. Base")
     end
 
     %% Connections showing the flow of data

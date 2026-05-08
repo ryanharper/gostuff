@@ -1,0 +1,258 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36">
+  <diagram name="DB Workload Telemetry" id="pLdPrTTqkyxdKoURrmpK">
+    <mxGraphModel dx="1542" dy="1024" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1d20;strokeColor=#343a40;fontColor=#ffffff;align=left;spacingLeft=15;spacingTop=10;shadow=1;strokeWidth=2;" value="&lt;b style=&#39;font-size:16px;color:#f5a623;&#39;&gt;Database Fleet &amp;amp; Workload Telemetry&lt;/b&gt;&lt;hr style=&#39;border-color:#495057;&#39;&gt;&lt;ul style=&#39;color:#ced4da; font-size:12px; margin-left:-15px;&#39;&gt;&lt;li&gt;&lt;b style=&#39;color:#4ea8de;&#39;&gt;Processes:&lt;/b&gt; Alloy natively exports DB-specific metrics (connections, locks).&lt;/li&gt;&lt;li&gt;&lt;b style=&#39;color:#90be6d;&#39;&gt;Logs:&lt;/b&gt; Tailing slow-queries, audit, and error logs directly from disk.&lt;/li&gt;&lt;li&gt;&lt;b style=&#39;color:#f94144;&#39;&gt;Cron/Backups:&lt;/b&gt; Capturing job success/failure via process monitoring &amp;amp; textfile collectors.&lt;/li&gt;&lt;/ul&gt;" vertex="1">
+          <mxGeometry height="130" width="380" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2b2d42;strokeColor=#8d99ae;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;fontColor=#ffffff;" value="&lt;b style=&#39;font-size:16px;color:#ced4da;&#39;&gt;Database Workloads (Sources)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="640" width="340" x="40" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#f80000;strokeWidth=2;arcSize=5;" value="" vertex="1">
+          <mxGeometry height="120" width="300" x="60" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-4" parent="1" style="shape=image;image=https://cdn.simpleicons.org/oracle/f80000;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" value="" vertex="1">
+          <mxGeometry height="50" width="50" x="80" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-5" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="&lt;b style=&#39;color:#ffffff;&#39;&gt;Oracle DB&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="80" x="65" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="Oracle Exporter (Metrics)" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f94144;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="RMAN Backup Logs" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="Alert / Audit Logs (.trc, .aud)" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#4169E1;strokeWidth=2;arcSize=5;" value="" vertex="1">
+          <mxGeometry height="120" width="300" x="60" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-10" parent="1" style="shape=image;image=https://cdn.simpleicons.org/postgresql/4169E1;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" value="" vertex="1">
+          <mxGeometry height="50" width="50" x="80" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-11" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="&lt;b style=&#39;color:#ffffff;&#39;&gt;PostgreSQL&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="80" x="65" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="Postgres Exporter (Queries/Locks)" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f94144;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="pg_dump / WAL Archiving Cron" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="Slow Query &amp;amp; Error Logs" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#4479A1;strokeWidth=2;arcSize=5;" value="" vertex="1">
+          <mxGeometry height="120" width="300" x="60" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-16" parent="1" style="shape=image;image=https://cdn.simpleicons.org/mysql/4479A1;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" value="" vertex="1">
+          <mxGeometry height="50" width="50" x="80" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-17" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="&lt;b style=&#39;color:#ffffff;&#39;&gt;MySQL&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="80" x="65" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="MySQLd Exporter (Innodb Stats)" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f94144;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="mysqldump / xtrabackup Cron" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="Slow Log / General Query Log" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#CC292B;strokeWidth=2;arcSize=5;" value="" vertex="1">
+          <mxGeometry height="120" width="300" x="60" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-22" parent="1" style="shape=image;image=https://cdn.simpleicons.org/microsoftsqlserver/CC292B;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" value="" vertex="1">
+          <mxGeometry height="50" width="50" x="80" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-23" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="&lt;b style=&#39;color:#ffffff;&#39;&gt;MS SQL Server&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="110" x="50" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="SQL Exporter / WMI (PerfMon)" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-25" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f94144;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="SQL Server Agent Jobs (Backups)" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" value="Windows Event Log / Error Log" vertex="1">
+          <mxGeometry height="25" width="180" x="160" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdfbf7;strokeColor=#f5a623;strokeWidth=2;align=center;verticalAlign=top;spacingTop=15;arcSize=5;shadow=1;dashed=1;" value="&lt;b style=&#39;font-size:16px;color:#d97706;&#39;&gt;Grafana Alloy (Telemetry Collector)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="640" width="380" x="540" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-28" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#4ea8de;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#0b5394;" value="&lt;b&gt;prometheus.exporter.*&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Scrapes endpoints natively.&lt;br/&gt;No separate exporters needed.&lt;/span&gt;" vertex="1">
+          <mxGeometry height="80" width="300" x="580" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-29" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f94144;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#b71c1c;" value="&lt;b&gt;prometheus.exporter.process / textfile&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Monitors running backup scripts.&lt;br/&gt;Reads success/fail status files.&lt;/span&gt;" vertex="1">
+          <mxGeometry height="75" width="300" x="580" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-30" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#90be6d;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#1b5e20;" value="&lt;b&gt;local.file_match &amp;amp; loki.source.file&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Tails log files dynamically.&lt;br/&gt;Parses JSON / Regex for structure.&lt;/span&gt;" vertex="1">
+          <mxGeometry height="80" width="300" x="580" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-31" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#ba68c8;strokeWidth=2;arcSize=8;fontColor=#4a148c;" value="&lt;b&gt;discovery.relabel &amp;amp; Pipeline Processing&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Tags all data with environment, db_name, workload_type&lt;/span&gt;" vertex="1">
+          <mxGeometry height="60" width="300" x="580" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=#495057;strokeWidth=2;align=center;verticalAlign=top;spacingTop=15;arcSize=5;shadow=1;fontColor=#ffffff;" value="&lt;b style=&#39;font-size:16px;&#39;&gt;Grafana Enterprise Backend&lt;/b&gt;" vertex="1">
+          <mxGeometry height="640" width="200" x="1040" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-33" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0288d1;strokeWidth=2;fontColor=#01579b;arcSize=8;align=center;" value="&lt;b style=&#39;font-size:14px;&#39;&gt;Grafana Mimir&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;(Long Term Metrics)&lt;br/&gt;&lt;br/&gt;Alerts on:&lt;br/&gt;- High Connection Pool&lt;br/&gt;- Missed Backup SLAs&lt;br/&gt;- Slow Query Spikes&lt;/span&gt;" vertex="1">
+          <mxGeometry height="150" width="140" x="1070" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-34" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#388e3c;strokeWidth=2;fontColor=#1b5e20;arcSize=8;align=center;" value="&lt;b style=&#39;font-size:14px;&#39;&gt;Grafana Loki&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;(Structured Logs)&lt;br/&gt;&lt;br/&gt;Indexes:&lt;br/&gt;- Error Tracebacks&lt;br/&gt;- Audit Login Fails&lt;br/&gt;- RMAN Output&lt;/span&gt;" vertex="1">
+          <mxGeometry height="150" width="140" x="1070" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-35" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-6" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="283" />
+              <mxPoint x="450" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-36" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-12" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="423" />
+              <mxPoint x="450" y="305" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-37" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-18" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="563" />
+              <mxPoint x="480" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-38" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-24" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="703" />
+              <mxPoint x="510" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-39" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-7" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#f94144;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="318" />
+              <mxPoint x="510" y="465" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-40" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-13" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#f94144;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="458" />
+              <mxPoint x="480" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-41" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-19" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#f94144;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="598" />
+              <mxPoint x="450" y="495" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-42" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-25" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#f94144;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="738" />
+              <mxPoint x="420" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-43" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-8" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-30">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="353" />
+              <mxPoint x="420" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-44" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-14" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-30">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="493" />
+              <mxPoint x="450" y="655" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-45" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-20" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-30">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="633" />
+              <mxPoint x="480" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-46" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-26" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;exitX=1;exitY=0.5;" target="eSAo7idFIbBBcR_9cjx1-30">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="773" />
+              <mxPoint x="510" y="685" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-47" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-28" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" target="eSAo7idFIbBBcR_9cjx1-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="305" />
+              <mxPoint x="560" y="770" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-48" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-29" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" target="eSAo7idFIbBBcR_9cjx1-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="480" />
+              <mxPoint x="560" y="770" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-49" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" target="eSAo7idFIbBBcR_9cjx1-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="655" />
+              <mxPoint x="560" y="770" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-50" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=4;strokeColor=#0288d1;endArrow=block;endFill=1;" target="eSAo7idFIbBBcR_9cjx1-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="760" />
+              <mxPoint x="960" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-51" connectable="0" parent="eSAo7idFIbBBcR_9cjx1-50" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#0288d1;fontSize=11;labelBorderColor=#b3e5fc;labelPadding=4;fontStyle=1" value="prometheus.remote_write" vertex="1">
+          <mxGeometry relative="1" x="0.1" as="geometry">
+            <mxPoint x="-40" y="-14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-52" edge="1" parent="1" source="eSAo7idFIbBBcR_9cjx1-31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=4;strokeColor=#388e3c;endArrow=block;endFill=1;" target="eSAo7idFIbBBcR_9cjx1-34">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="780" />
+              <mxPoint x="960" y="675" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eSAo7idFIbBBcR_9cjx1-53" connectable="0" parent="eSAo7idFIbBBcR_9cjx1-52" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#388e3c;fontSize=11;labelBorderColor=#c8e6c9;labelPadding=4;fontStyle=1" value="loki.write" vertex="1">
+          <mxGeometry relative="1" x="0.1" as="geometry">
+            <mxPoint x="-11" y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

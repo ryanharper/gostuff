@@ -1,0 +1,116 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" version="21.2.3" type="device">
+  <diagram name="Alloy VM Architecture" id="alloy_vm_slick">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Legend / Info Box -->
+        <mxCell id="Legend" value="&lt;b style='font-size:14px;color:#f5a623;'&gt;Modern VM Telemetry Architecture&lt;/b&gt;&lt;hr style='border-color:#495057;'&gt;&lt;ul style='color:#ced4da; font-size:12px; margin-left:-15px;'&gt;&lt;li&gt;&lt;b&gt;Decoupled:&lt;/b&gt; Ansible only touches the VM once.&lt;/li&gt;&lt;li&gt;&lt;b&gt;Dynamic Modules:&lt;/b&gt; Global telemetry profiles pulled from Git.&lt;/li&gt;&lt;li&gt;&lt;b&gt;Hot-Reloading:&lt;/b&gt; Local app teams can drop `.alloy` files.&lt;/li&gt;&lt;li&gt;&lt;b&gt;Built-in Exporters:&lt;/b&gt; Replaces standalone Node/WMI exporters.&lt;/li&gt;&lt;/ul&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=#343a40;fontColor=#ffffff;align=left;spacingLeft=15;spacingTop=10;shadow=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="280" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- EXTERNAL CONTROL PLANE -->
+        <mxCell id="Ansible" value="&lt;b style='font-size:14px;'&gt;Ansible / Chef&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;color:#adb5bd;'&gt;One-time execution.&lt;br/&gt;Installs Alloy &amp;amp; Systemd/Service&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a237e;strokeColor=none;fontColor=#ffffff;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="260" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="GitRepo" value="&lt;b style='font-size:14px;'&gt;Central Git Repo&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;color:#adb5bd;'&gt;Standardized VM Modules&lt;br/&gt;(e.g., standard_linux_profile.alloy)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b71c1c;strokeColor=none;fontColor=#ffffff;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="460" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- VM BOUNDARY (The "Metal") -->
+        <mxCell id="VMBoundary" value="&lt;b style='font-size:16px;color:#495057;'&gt;Virtual Machine (Linux / Windows Server)&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:12px;color:#6c757d;'&gt;Target Infrastructure&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#ced4da;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;arcSize=5;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="200" width="560" height="420" as="geometry" />
+        </mxCell>
+
+        <!-- ALLOY INTERNAL ENGINE BOUNDARY -->
+        <mxCell id="AlloyBoundary" value="&lt;b style='font-size:14px;color:#d97706;'&gt;Grafana Alloy Engine (Continuous Runtime)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f5a623;strokeWidth=2;dashed=1;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="370" y="280" width="500" height="310" as="geometry" />
+        </mxCell>
+
+        <!-- ALLOY COMPONENTS (Inside VM) -->
+        <mxCell id="BootstrapConfig" value="&lt;b&gt;config.alloy (Static)&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Minimal bootstrap.&lt;br/&gt;Tells Alloy where to look.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f3f5;strokeColor=#adb5bd;strokeWidth=1;fontColor=#343a40;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="330" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="LocalFileMatch" value="&lt;b&gt;local.file_match&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Watches /etc/alloy/conf.d/&lt;br/&gt;&lt;i&gt;Auto-reloads on drop&lt;/i&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#64b5f6;strokeWidth=2;fontColor=#0d47a1;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="330" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ImportGit" value="&lt;b&gt;import.git&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Pulls dynamic logic&lt;br/&gt;&lt;i&gt;Over the network&lt;/i&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbe9e7;strokeColor=#ff8a65;strokeWidth=2;fontColor=#bf360c;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="420" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="VMDiscovery" value="&lt;b&gt;OS &amp;amp; App Discovery&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;prometheus.exporter.unix&lt;br/&gt;local.file (var/log/*.log)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#81c784;strokeWidth=2;fontColor=#1b5e20;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="420" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Pipeline" value="&lt;b&gt;Telemetry Processing Pipeline&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;Filtering, Relabeling, Batching, and Forwarding&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#ba68c8;strokeWidth=2;fontColor=#4a148c;arcSize=8;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="390" y="510" width="460" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- DESTINATIONS -->
+        <mxCell id="Destinations" value="&lt;b style='font-size:14px;'&gt;Grafana LGTM Stack&lt;/b&gt;&lt;hr style='margin:5px 0;border-color:#495057;'&gt;&lt;span style='font-size:11px;color:#adb5bd;'&gt;Mimir (Metrics)&lt;br/&gt;Loki (Logs)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=none;fontColor=#ffffff;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="960" y="500" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES & CONNECTIONS -->
+        
+        <!-- Ansible -> Bootstrap -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#adb5bd;endArrow=block;endFill=1;dashed=1;" edge="1" parent="1" source="Ansible" target="BootstrapConfig">
+          <mxGeometry relative="1" as="geometry" />
+          <mxCell value="Deploys once" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#495057;fontSize=11;labelBorderColor=#ced4da;labelPadding=4;" vertex="1" connectable="0" parent="e1">
+            <mxGeometry x="0.2" y="-1" relative="1" as="geometry">
+              <mxPoint x="-11" y="-16" as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+
+        <!-- Git -> import.git -->
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#ff8a65;endArrow=block;endFill=1;" edge="1" parent="1" source="GitRepo" target="ImportGit">
+          <mxGeometry relative="1" as="geometry" />
+          <mxCell value="Pulls periodically" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#bf360c;fontSize=11;labelBorderColor=#ffccbc;labelPadding=4;" vertex="1" connectable="0" parent="e2">
+            <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+              <mxPoint x="-15" y="-11" as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+
+        <!-- Bootstrap -> Internal wiring -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#ced4da;endArrow=block;endFill=1;" edge="1" parent="1" source="BootstrapConfig" target="LocalFileMatch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#ced4da;endArrow=block;endFill=1;" edge="1" parent="1" source="BootstrapConfig" target="ImportGit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flow into Discovery -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#64b5f6;endArrow=block;endFill=1;" edge="1" parent="1" source="LocalFileMatch" target="VMDiscovery">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flow into Pipeline -->
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#ff8a65;endArrow=block;endFill=1;" edge="1" parent="1" source="ImportGit" target="Pipeline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#81c784;endArrow=block;endFill=1;" edge="1" parent="1" source="VMDiscovery" target="Pipeline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Pipeline to Destination -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#ba68c8;endArrow=block;endFill=1;" edge="1" parent="1" source="Pipeline" target="Destinations">
+          <mxGeometry relative="1" as="geometry" />
+          <mxCell value="Ships Telemetry" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#4a148c;fontSize=11;labelBorderColor=#e1bee7;labelPadding=4;" vertex="1" connectable="0" parent="e8">
+            <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+              <mxPoint x="-6" y="-16" as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

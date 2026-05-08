@@ -1,0 +1,120 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36" version="28.2.5">
+  <diagram name="Enterprise Alloy Management" id="nUaBuTBzPKfYgaSvHtSv">
+    <mxGraphModel dx="1554" dy="1024" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-23" value="&lt;b style=&#39;font-size:16px;color:#f5a623;&#39;&gt;Enterprise Alloy Systems Management&lt;/b&gt;&lt;hr style=&#39;border-color:#495057;&#39;&gt;&lt;ul style=&#39;color:#ced4da; font-size:12px; margin-left:-15px;&#39;&gt;&lt;li&gt;&lt;b style=&#39;color:#e74c3c;&#39;&gt;Red Hat Satellite:&lt;/b&gt; Manages Linux RPMs &amp;amp; Content Views.&lt;/li&gt;&lt;li&gt;&lt;b style=&#39;color:#3498db;&#39;&gt;SCCM / MECM:&lt;/b&gt; Manages Windows MSIs &amp;amp; Rollout Rings.&lt;/li&gt;&lt;li&gt;&lt;b style=&#39;color:#2ecc71;&#39;&gt;Separation of Concerns:&lt;/b&gt; Binary upgrades are pushed via Systems Management. Config is pulled dynamically by Alloy.&lt;/li&gt;&lt;/ul&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1d20;strokeColor=#343a40;fontColor=#ffffff;align=left;spacingLeft=15;spacingTop=10;shadow=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="340" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-24" value="&lt;b style=&#39;font-size:14px;&#39;&gt;GitOps / Source Control&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:11px;color:#adb5bd;&#39;&gt;Holds Alloy `.alloy` Profiles&lt;br/&gt;&amp;amp; Agent Version Specs&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=#f39c12;strokeWidth=2;fontColor=#ffffff;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="440" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-25" value="&lt;b style=&#39;font-size:15px;color:#cc0000;&#39;&gt;Red Hat Satellite&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:12px;color:#495057;&#39;&gt;Linux Systems Management&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdf2f2;strokeColor=#cc0000;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="220" width="280" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-26" value="&lt;b&gt;Content Views (Versioning)&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;v1.3 &lt;b&gt;→&lt;/b&gt; DEV Env&lt;br/&gt;v1.2 &lt;b&gt;→&lt;/b&gt; PROD Env&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e06666;strokeWidth=2;fontColor=#990000;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="330" y="275" width="220" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-27" value="&lt;b&gt;Lifecycle Envs / Host Groups&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Pushes RPM &amp;amp; systemd bootstrap&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1;fontColor=#000000;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="330" y="360" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-28" value="&lt;b style=&#39;font-size:15px;color:#0078d7;&#39;&gt;SCCM / MECM&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:12px;color:#495057;&#39;&gt;Windows Systems Management&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f8ff;strokeColor=#0078d7;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="520" width="280" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-29" value="&lt;b&gt;Application Model (Versioning)&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Alloy v1.3 (Detection Method)&lt;br/&gt;Supersedes Alloy v1.2&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6fa8dc;strokeWidth=2;fontColor=#0b5394;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="330" y="580" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-30" value="&lt;b&gt;Device Collections (Rollout)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Ring 0 (Test) → Ring 1 → Ring 2 (Prod)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1;fontColor=#000000;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="330" y="670" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-31" value="&lt;b style=&#39;font-size:15px;color:#212529;&#39;&gt;RHEL / Linux Fleet&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:12px;color:#6c757d;&#39;&gt;Target VMs (Dev/Prod)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#adb5bd;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="220" width="240" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-32" value="&lt;b style=&#39;color:#d97706;&#39;&gt;Grafana Alloy Engine&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Binary: v1.3 (via RPM)&lt;br/&gt;Config: Pulls via import.git&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f5a623;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="710" y="280" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-33" value="&lt;b style=&#39;font-size:15px;color:#212529;&#39;&gt;Windows Server Fleet&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:12px;color:#6c757d;&#39;&gt;Target VMs (Rings 0-2)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#adb5bd;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="540" width="240" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-34" value="&lt;b style=&#39;color:#d97706;&#39;&gt;Grafana Alloy Engine&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;&#39;&gt;&lt;span style=&#39;font-size:11px;&#39;&gt;Binary: v1.3 (via MSI)&lt;br/&gt;Config: Pulls via import.git&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f5a623;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="710" y="610" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-35" value="&lt;b style=&#39;font-size:16px;&#39;&gt;Grafana LGTM&lt;/b&gt;&lt;hr style=&#39;margin:5px 0;border-color:#495057;&#39;&gt;&lt;span style=&#39;font-size:12px;color:#adb5bd;&#39;&gt;Mimir (Metrics)&lt;br/&gt;Loki (Logs)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=none;fontColor=#ffffff;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="420" width="140" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-36" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;dashed=1;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-24" target="LfgYDs2PnSeTMkYj1wfz-25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-37" value="Registers new RPM version" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#495057;fontSize=11;labelBorderColor=#ced4da;labelPadding=4;" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-36">
+          <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+            <mxPoint x="-15" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-38" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;dashed=1;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-24" target="LfgYDs2PnSeTMkYj1wfz-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-39" value="Packages new MSI" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#495057;fontSize=11;labelBorderColor=#ced4da;labelPadding=4;" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-38">
+          <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+            <mxPoint x="-15" y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-40" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#e06666;endArrow=block;endFill=1;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-27" target="LfgYDs2PnSeTMkYj1wfz-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-41" value="Deploys / Upgrades Binary" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#cc0000;fontSize=11;labelBorderColor=#f8cecc;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-40">
+          <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+            <mxPoint x="-4" y="-16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-42" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#6fa8dc;endArrow=block;endFill=1;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-30" target="LfgYDs2PnSeTMkYj1wfz-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-43" value="Deploys / Upgrades Binary" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#0078d7;fontSize=11;labelBorderColor=#dae8fc;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-42">
+          <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+            <mxPoint x="-4" y="-16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-44" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#f39c12;endArrow=classic;endFill=1;dashed=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-24" target="LfgYDs2PnSeTMkYj1wfz-32">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="400" />
+              <mxPoint x="640" y="400" />
+              <mxPoint x="640" y="333" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-45" value="import.git (Dynamic Profile Pull)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#d97706;fontSize=11;labelBorderColor=#f5a623;labelPadding=4;" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-44">
+          <mxGeometry x="0.2" relative="1" as="geometry">
+            <mxPoint x="66" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-46" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#f39c12;endArrow=classic;endFill=1;dashed=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-24" target="LfgYDs2PnSeTMkYj1wfz-34">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="530" />
+              <mxPoint x="640" y="530" />
+              <mxPoint x="640" y="663" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-47" value="import.git (Dynamic Profile Pull)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#d97706;fontSize=11;labelBorderColor=#f5a623;labelPadding=4;" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-46">
+          <mxGeometry x="0.2" relative="1" as="geometry">
+            <mxPoint x="66" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-48" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#8e44ad;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-32" target="LfgYDs2PnSeTMkYj1wfz-35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-49" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=3;strokeColor=#8e44ad;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="LfgYDs2PnSeTMkYj1wfz-34" target="LfgYDs2PnSeTMkYj1wfz-35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LfgYDs2PnSeTMkYj1wfz-50" value="Streams Metrics &amp;amp; Logs" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#8e44ad;fontSize=11;labelBorderColor=#d2b4de;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="LfgYDs2PnSeTMkYj1wfz-49">
+          <mxGeometry x="0.3" relative="1" as="geometry">
+            <mxPoint x="-1" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

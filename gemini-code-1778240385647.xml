@@ -1,0 +1,162 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" version="21.2.3" type="device">
+  <diagram name="OS Level Telemetry" id="alloy_os_hosts">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="850" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Legend / Info Box -->
+        <mxCell id="Legend" value="&lt;b style='font-size:16px;color:#f5a623;'&gt;Native OS Telemetry Architecture&lt;/b&gt;&lt;hr style='border-color:#495057;'&gt;&lt;ul style='color:#ced4da; font-size:12px; margin-left:-15px;'&gt;&lt;li&gt;&lt;b style='color:#4ea8de;'&gt;OS Metrics:&lt;/b&gt; High-resolution hardware &amp;amp; system state scraping.&lt;/li&gt;&lt;li&gt;&lt;b style='color:#90be6d;'&gt;Linux Logs:&lt;/b&gt; Native Journald tailing and unstructured log parsing.&lt;/li&gt;&lt;li&gt;&lt;b style='color:#b19cd9;'&gt;Windows Events:&lt;/b&gt; Direct integration with the Windows Event Log API.&lt;/li&gt;&lt;li&gt;&lt;b style='color:#f39c12;'&gt;Local Agent:&lt;/b&gt; Alloy runs natively as a systemd / Windows service.&lt;/li&gt;&lt;/ul&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1d20;strokeColor=#343a40;fontColor=#ffffff;align=left;spacingLeft=15;spacingTop=10;shadow=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="380" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- OS TIER (Left) -->
+        <mxCell id="OSBoundary" value="&lt;b style='font-size:16px;color:#ced4da;'&gt;Host Operating Systems&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2b2d42;strokeColor=#8d99ae;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="220" width="340" height="520" as="geometry" />
+        </mxCell>
+
+        <!-- Linux Block -->
+        <mxCell id="BoxLinux" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#F5A623;strokeWidth=2;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="280" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="LogoLinux" value="" style="shape=image;image=https://cdn.simpleicons.org/linux/ffffff;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" vertex="1" parent="1">
+          <mxGeometry x="80" y="340" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TitleLinux" value="&lt;b style='color:#ffffff;'&gt;Linux Fleet&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:10px;color:#adb5bd'&gt;RHEL / Ubuntu / Debian&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="410" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="NodeLinMetrics" value="Procfs &amp;amp; Sysfs&lt;br/&gt;(CPU, Mem, Net, Disk IO)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="170" y="300" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="NodeLinJournal" value="Systemd Journal&lt;br/&gt;(Native Binary Logs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="170" y="355" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="NodeLinFiles" value="/var/log/*.log&lt;br/&gt;(Auth, Syslog, Dmesg)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="170" y="410" width="170" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Windows Block -->
+        <mxCell id="BoxWin" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#0078D4;strokeWidth=2;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="510" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="LogoWin" value="" style="shape=image;image=https://cdn.simpleicons.org/windows/0078D4;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" vertex="1" parent="1">
+          <mxGeometry x="80" y="560" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TitleWin" value="&lt;b style='color:#ffffff;'&gt;Windows Fleet&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:10px;color:#adb5bd'&gt;Server 2019 / 2022&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="630" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="NodeWinMetrics" value="WMI &amp;amp; PerfMon Counters&lt;br/&gt;(Hardware, IIS, Services)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="170" y="530" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="NodeWinEvents" value="Windows Event Log API&lt;br/&gt;(System, Application, Setup)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b19cd9;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="170" y="585" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="NodeWinSecurity" value="Security Logs&lt;br/&gt;(Logon Audits, Kerberos)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b19cd9;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="170" y="640" width="170" height="40" as="geometry" />
+        </mxCell>
+
+
+        <!-- ALLOY ENGINE TIER (Middle) -->
+        <mxCell id="AlloyBoundary" value="&lt;b style='font-size:16px;color:#d97706;'&gt;Grafana Alloy Engine (Local Agent)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdfbf7;strokeColor=#f5a623;strokeWidth=2;align=center;verticalAlign=top;spacingTop=15;arcSize=5;shadow=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="220" width="380" height="520" as="geometry" />
+        </mxCell>
+
+        <!-- Alloy Processing Blocks -->
+        <mxCell id="AlloyUnixMet" value="&lt;b&gt;prometheus.exporter.unix&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Native Linux hardware/OS instrumentation.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#4ea8de;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#0b5394;" vertex="1" parent="1">
+          <mxGeometry x="580" y="280" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloyLinLog" value="&lt;b&gt;loki.source.journal / local.file_match&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Direct read of binary journal &amp;amp; text log tailing.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#90be6d;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#1b5e20;" vertex="1" parent="1">
+          <mxGeometry x="580" y="370" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloyWinMet" value="&lt;b&gt;prometheus.exporter.windows&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Native Windows Registry / PerfMon integration.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#4ea8de;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#0b5394;" vertex="1" parent="1">
+          <mxGeometry x="580" y="470" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloyWinEvent" value="&lt;b&gt;loki.source.windowsevent&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Hooks into Event Logs, drops noisy/informational events.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4eaff;strokeColor=#b19cd9;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#4a148c;" vertex="1" parent="1">
+          <mxGeometry x="580" y="560" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloyPipeline" value="&lt;b&gt;Universal Enrichment Pipeline&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;Appends generic tags: 'hostname', 'os_type', 'environment'&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#ba68c8;strokeWidth=2;arcSize=8;fontColor=#4a148c;" vertex="1" parent="1">
+          <mxGeometry x="580" y="650" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- DESTINATION TIER (Right) -->
+        <mxCell id="DestBoundary" value="&lt;b style='font-size:16px;'&gt;Grafana Enterprise&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=#495057;strokeWidth=2;align=center;verticalAlign=top;spacingTop=15;arcSize=5;shadow=1;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="220" width="200" height="520" as="geometry" />
+        </mxCell>
+
+        <mxCell id="DestMimir" value="&lt;b style='font-size:14px;'&gt;Grafana Mimir&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;(OS Metrics)&lt;br/&gt;&lt;br/&gt;- CPU / Memory Saturation&lt;br/&gt;- Disk Space Exhaustion&lt;br/&gt;- Network Dropped Packets&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0288d1;strokeWidth=2;fontColor=#01579b;arcSize=8;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="280" width="140" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="DestLoki" value="&lt;b style='font-size:14px;'&gt;Grafana Loki&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;(System Logs &amp;amp; Events)&lt;br/&gt;&lt;br/&gt;- Segfaults / OOM Kills&lt;br/&gt;- Failed RDP / SSH Logins&lt;br/&gt;- App Crashes (Event 1000)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#388e3c;strokeWidth=2;fontColor=#1b5e20;arcSize=8;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="550" width="140" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES & CONNECTIONS (Curved routing) -->
+        
+        <!-- Metrics Edges (Blue) -->
+        <mxCell id="e_lin_met" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeLinMetrics" target="AlloyUnixMet">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="460" y="320" /><mxPoint x="460" y="310" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_win_met" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeWinMetrics" target="AlloyWinMet">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="460" y="550" /><mxPoint x="460" y="500" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Linux Logs Edges (Green) -->
+        <mxCell id="e_lin_log1" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeLinJournal" target="AlloyLinLog">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="375" /><mxPoint x="490" y="390" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_lin_log2" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeLinFiles" target="AlloyLinLog">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="430" /><mxPoint x="520" y="410" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Windows Events Edges (Purple) -->
+        <mxCell id="e_win_evt1" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#b19cd9;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeWinEvents" target="AlloyWinEvent">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="605" /><mxPoint x="490" y="580" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_win_evt2" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#b19cd9;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeWinSecurity" target="AlloyWinEvent">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="660" /><mxPoint x="520" y="600" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Internal Alloy Edges -->
+        <mxCell id="e_int1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyUnixMet" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="550" y="310" /><mxPoint x="550" y="680" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_int2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyLinLog" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="560" y="400" /><mxPoint x="560" y="680" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_int3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyWinMet" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="560" y="500" /><mxPoint x="560" y="680" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_int4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyWinEvent" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="550" y="590" /><mxPoint x="550" y="680" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Outbound Edges to Destinations -->
+        <mxCell id="e_out1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=4;strokeColor=#0288d1;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyPipeline" target="DestMimir">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="960" y="670" /><mxPoint x="960" y="355" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_out1" value="prometheus.remote_write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#0288d1;fontSize=11;labelBorderColor=#b3e5fc;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_out1">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="-40" y="-14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e_out2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=4;strokeColor=#388e3c;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyPipeline" target="DestLoki">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="960" y="690" /><mxPoint x="960" y="625" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_out2" value="loki.write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#388e3c;fontSize=11;labelBorderColor=#c8e6c9;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_out2">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="-11" y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

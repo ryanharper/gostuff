@@ -1,0 +1,164 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" version="21.2.3" type="device">
+  <diagram name="Hypervisor Telemetry" id="alloy_hypervisors">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="900" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Legend / Info Box -->
+        <mxCell id="Legend" value="&lt;b style='font-size:16px;color:#f5a623;'&gt;Hypervisor Infrastructure Telemetry&lt;/b&gt;&lt;hr style='border-color:#495057;'&gt;&lt;ul style='color:#ced4da; font-size:12px; margin-left:-15px;'&gt;&lt;li&gt;&lt;b style='color:#4ea8de;'&gt;API Polling (Metrics):&lt;/b&gt; Alloy natively polls vCenter &amp;amp; Prism REST APIs.&lt;/li&gt;&lt;li&gt;&lt;b style='color:#90be6d;'&gt;Syslog (Logs):&lt;/b&gt; ESXi and AHV nodes stream system logs directly to Alloy.&lt;/li&gt;&lt;li&gt;&lt;b style='color:#e74c3c;'&gt;Agentless:&lt;/b&gt; Centralized collector paradigm; no software installed on bare metal.&lt;/li&gt;&lt;/ul&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1d20;strokeColor=#343a40;fontColor=#ffffff;align=left;spacingLeft=15;spacingTop=10;shadow=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="400" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- HYPERVISOR TIER (Left) -->
+        <mxCell id="InfraBoundary" value="&lt;b style='font-size:16px;color:#ced4da;'&gt;Virtualization Infrastructure&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2b2d42;strokeColor=#8d99ae;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=15;spacingTop=15;arcSize=5;shadow=1;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="340" height="540" as="geometry" />
+        </mxCell>
+
+        <!-- VMware Block -->
+        <mxCell id="BoxVMW" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#607078;strokeWidth=2;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="260" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="LogoVMW" value="" style="shape=image;image=https://cdn.simpleicons.org/vmware/607078;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TitleVMW" value="&lt;b style='color:#ffffff;'&gt;VMware vSphere&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="390" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="NodeVmwVcenter" value="vCenter Server API&lt;br/&gt;(Cluster/Host/VM Stats)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="160" y="280" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="NodeVmwEsxi" value="ESXi Hosts (Bare Metal)&lt;br/&gt;System Events &amp;amp; Audits" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="160" y="380" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Nutanix Block -->
+        <mxCell id="BoxNut" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3a3c54;strokeColor=#2258A5;strokeWidth=2;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="500" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="LogoNut" value="" style="shape=image;image=https://cdn.simpleicons.org/nutanix/2258A5;verticalLabelPosition=bottom;verticalAlign=top;imageBackground=none;imageBorder=none;" vertex="1" parent="1">
+          <mxGeometry x="80" y="560" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TitleNut" value="&lt;b style='color:#ffffff;'&gt;Nutanix AHV&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="630" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="NodeNutPrism" value="Prism Central/Element API&lt;br/&gt;(Storage/Compute Stats)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ea8de;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="160" y="520" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="NodeNutAhv" value="AHV Acropolis Nodes&lt;br/&gt;Kernel &amp;amp; Hypervisor Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90be6d;strokeColor=none;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="160" y="620" width="180" height="40" as="geometry" />
+        </mxCell>
+
+
+        <!-- ALLOY ENGINE TIER (Middle) -->
+        <mxCell id="AlloyBoundary" value="&lt;b style='font-size:16px;color:#d97706;'&gt;Grafana Alloy (Central Collector Node)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdfbf7;strokeColor=#f5a623;strokeWidth=2;align=center;verticalAlign=top;spacingTop=15;arcSize=5;shadow=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="200" width="380" height="540" as="geometry" />
+        </mxCell>
+
+        <!-- Alloy Processing Blocks -->
+        <mxCell id="AlloyVsphere" value="&lt;b&gt;prometheus.exporter.vsphere&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Authenticates to vCenter API.&lt;br/&gt;Scrapes resource pools, datastores, &amp;amp; VMs.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#4ea8de;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#0b5394;" vertex="1" parent="1">
+          <mxGeometry x="580" y="260" width="300" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloyNutanix" value="&lt;b&gt;prometheus.scrape (HTTP/API)&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Hits Prism REST APIs or Nutanix Exporter container to pull cluster IOPS &amp;amp; latency.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#4ea8de;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#0b5394;" vertex="1" parent="1">
+          <mxGeometry x="580" y="360" width="300" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloySyslog" value="&lt;b&gt;loki.source.syslog&lt;/b&gt;&lt;hr style='margin:5px 0;'&gt;&lt;span style='font-size:11px;'&gt;Listens on TCP/UDP 514.&lt;br/&gt;Parses incoming hypervisor streams.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#90be6d;strokeWidth=2;arcSize=8;verticalAlign=top;spacingTop=10;fontColor=#1b5e20;" vertex="1" parent="1">
+          <mxGeometry x="580" y="490" width="300" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="AlloyPipeline" value="&lt;b&gt;discovery.relabel &amp;amp; Pipeline&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;Tags data with 'vendor', 'cluster_name', 'datacenter'&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#ba68c8;strokeWidth=2;arcSize=8;fontColor=#4a148c;" vertex="1" parent="1">
+          <mxGeometry x="580" y="630" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- DESTINATION TIER (Right) -->
+        <mxCell id="DestBoundary" value="&lt;b style='font-size:16px;'&gt;Grafana Enterprise&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212529;strokeColor=#495057;strokeWidth=2;align=center;verticalAlign=top;spacingTop=15;arcSize=5;shadow=1;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="200" width="200" height="540" as="geometry" />
+        </mxCell>
+
+        <mxCell id="DestMimir" value="&lt;b style='font-size:14px;'&gt;Grafana Mimir&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;(Hypervisor Metrics)&lt;br/&gt;&lt;br/&gt;- Host CPU Ready%&lt;br/&gt;- Datastore Latency&lt;br/&gt;- VM Memory Ballooning&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0288d1;strokeWidth=2;fontColor=#01579b;arcSize=8;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="260" width="140" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="DestLoki" value="&lt;b style='font-size:14px;'&gt;Grafana Loki&lt;/b&gt;&lt;br/&gt;&lt;span style='font-size:11px;'&gt;(Syslog &amp;amp; Audits)&lt;br/&gt;&lt;br/&gt;- Hardware faults&lt;br/&gt;- Storage disconnects&lt;br/&gt;- Root login attempts&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#388e3c;strokeWidth=2;fontColor=#1b5e20;arcSize=8;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="540" width="140" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES & CONNECTIONS (Curved routing) -->
+        
+        <!-- Metrics Edges (Blue - API Polling) -->
+        <!-- Note: Arrows point FROM Alloy TO Hypervisor to show POLLING, then return -->
+        <mxCell id="e_vmw_met" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;startArrow=classic;startFill=1;" edge="1" parent="1" source="AlloyVsphere" target="NodeVmwVcenter">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="460" y="295" /><mxPoint x="460" y="300" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_vmw_met" value="Polls API (TCP 443)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#2b2d42;fontColor=#4ea8de;fontSize=11;labelBorderColor=none;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_vmw_met">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="-11" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e_nut_met" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#4ea8de;endArrow=block;endFill=1;startArrow=classic;startFill=1;" edge="1" parent="1" source="AlloyNutanix" target="NodeNutPrism">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="460" y="395" /><mxPoint x="460" y="540" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_nut_met" value="Polls REST (TCP 9440)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#2b2d42;fontColor=#4ea8de;fontSize=11;labelBorderColor=none;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_nut_met">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="36" y="24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Log Edges (Green - Syslog Push) -->
+        <mxCell id="e_vmw_log" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeVmwEsxi" target="AlloySyslog">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="410" y="400" /><mxPoint x="410" y="510" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_vmw_log" value="Pushes Syslog (UDP 514)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#2b2d42;fontColor=#90be6d;fontSize=11;labelBorderColor=none;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_vmw_log">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="2" y="-36" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e_nut_log" style="edgeStyle=orthogonalEdgeStyle;curved=1;html=1;strokeWidth=2;strokeColor=#90be6d;endArrow=block;endFill=1;" edge="1" parent="1" source="NodeNutAhv" target="AlloySyslog">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="410" y="640" /><mxPoint x="410" y="540" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_nut_log" value="Pushes Syslog (UDP 514)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#2b2d42;fontColor=#90be6d;fontSize=11;labelBorderColor=none;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_nut_log">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="-23" y="19" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Internal Alloy Edges -->
+        <mxCell id="e_int1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyVsphere" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="560" y="295" /><mxPoint x="560" y="660" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_int2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyNutanix" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="560" y="395" /><mxPoint x="560" y="660" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_int3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=2;strokeColor=#adb5bd;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloySyslog" target="AlloyPipeline">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="560" y="525" /><mxPoint x="560" y="660" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- Outbound Edges to Destinations -->
+        <mxCell id="e_out1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=4;strokeColor=#0288d1;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyPipeline" target="DestMimir">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="960" y="650" /><mxPoint x="960" y="335" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_out1" value="prometheus.remote_write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#0288d1;fontSize=11;labelBorderColor=#b3e5fc;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_out1">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="-40" y="-14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e_out2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=4;strokeColor=#388e3c;endArrow=block;endFill=1;" edge="1" parent="1" source="AlloyPipeline" target="DestLoki">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="960" y="670" /><mxPoint x="960" y="615" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="el_out2" value="loki.write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#388e3c;fontSize=11;labelBorderColor=#c8e6c9;labelPadding=4;fontStyle=1" vertex="1" connectable="0" parent="e_out2">
+          <mxGeometry x="0.1" y="0" relative="1" as="geometry">
+            <mxPoint x="-11" y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

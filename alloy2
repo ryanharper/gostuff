@@ -1,0 +1,23 @@
+// 1. Collect file statistics
+otelcol.receiver.file_stats "daily_exports" {
+  // Use a wildcard to match all historical and future files
+  include = "/path/to/data_*.csv"
+  collection_interval = "1m"
+  
+  output {
+    // Send OTel metrics to the Prometheus exporter
+    metrics = [otelcol.exporter.prometheus.to_prom.input]
+  }
+}
+
+// 2. Convert OpenTelemetry metrics to Prometheus format
+otelcol.exporter.prometheus "to_prom" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+// 3. Send to your backend
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "https://your-prometheus-endpoint/api/v1/write"
+  }
+}

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-03T10:20:00.000Z" agent="Mozilla/5.0" version="21.5.0" type="device">
+  <diagram id="alloy_config" name="Alloy Workflow">
+    <mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Phase Containers -->
+        <mxCell id="phase1" value="Inputs" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;fontStyle=1;fontSize=16;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="260" height="450" as="geometry" />
+        </mxCell>
+        <mxCell id="phase2" value="Processing" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fillColor=#e1d5e7;fontColor=#333333;strokeColor=#9673a6;fontStyle=1;fontSize=16;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="50" width="340" height="450" as="geometry" />
+        </mxCell>
+        <mxCell id="phase3" value="Outputs &amp;amp; Application" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fillColor=#dae8fc;fontColor=#333333;strokeColor=#6c8ebf;fontStyle=1;fontSize=16;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="50" width="280" height="450" as="geometry" />
+        </mxCell>
+
+        <!-- Elements inside Phase 1 -->
+        <mxCell id="ansible_logo" value="Ansible" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://upload.wikimedia.org/wikipedia/commons/2/24/Ansible_logo.svg;fontStyle=1;fontSize=14;" vertex="1" parent="phase1">
+          <mxGeometry x="90" y="60" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="yaml_file" value="config.yaml&amp;#xa;(with Schema)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=14;shadow=1;" vertex="1" parent="phase1">
+          <mxGeometry x="80" y="240" width="100" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- Elements inside Phase 2 -->
+        <mxCell id="jinja_box" value="Ansible Templating Engine&amp;#xa;(Jinja2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=14;shadow=1;" vertex="1" parent="phase2">
+          <mxGeometry x="60" y="150" width="220" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Elements inside Phase 3 -->
+        <mxCell id="river_file" value="alloy-config.river&amp;#xa;(Rendered Output)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;shadow=1;" vertex="1" parent="phase3">
+          <mxGeometry x="90" y="70" width="110" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="grafana_alloy" value="Grafana Alloy&amp;#xa;Service" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://upload.wikimedia.org/wikipedia/commons/a/a1/Grafana_logo.svg;fontStyle=1;fontSize=14;" vertex="1" parent="phase3">
+          <mxGeometry x="100" y="280" width="90" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Connections / Edges -->
+        <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="ansible_logo" target="jinja_box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="150" />
+              <mxPoint x="330" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="yaml_file" target="jinja_box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="355" />
+              <mxPoint x="330" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="jinja_box" target="river_file">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="260" />
+              <mxPoint x="730" y="185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="river_file" target="grafana_alloy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

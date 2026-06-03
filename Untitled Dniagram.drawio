@@ -1,0 +1,49 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Alloy Log Pipeline" id="-ebroI4b6nWVBfx0jtJe">
+    <mxGraphModel dx="1542" dy="1024" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="9LySiJVitfpNLntl-1ey-1" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fillColor=#f8f9fa;fontColor=#333333;strokeColor=#343a40;fontStyle=1;fontSize=18;rounded=1;shadow=1;swimlaneLine=1;" value="Grafana Alloy Log Pipeline" vertex="1">
+          <mxGeometry height="320" width="860" x="220" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-2" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=14;shadow=1;" value="Log Files&amp;#xa;(/var/log/*.log)" vertex="1">
+          <mxGeometry height="140" width="120" x="40" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2980b9;fontColor=#ffffff;strokeColor=#1c5981;fontStyle=1;fontSize=14;shadow=1;" value="local.file_match&amp;#xa;(Target Discovery)" vertex="1">
+          <mxGeometry height="80" width="150" x="260" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2980b9;fontColor=#ffffff;strokeColor=#1c5981;fontStyle=1;fontSize=14;shadow=1;" value="loki.source.file&amp;#xa;(Log Tailing)" vertex="1">
+          <mxGeometry height="80" width="140" x="470" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8e44ad;fontColor=#ffffff;strokeColor=#5b2c6f;fontStyle=1;fontSize=14;shadow=1;" value="loki.process&amp;#xa;(Parse, Extract, Filter)" vertex="1">
+          <mxGeometry height="80" width="160" x="670" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d35400;fontColor=#ffffff;strokeColor=#873600;fontStyle=1;fontSize=14;shadow=1;" value="loki.write&amp;#xa;(Network Forwarder)" vertex="1">
+          <mxGeometry height="80" width="150" x="890" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-7" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fad7ac;fontColor=#333333;strokeColor=#b46504;fontStyle=1;shadow=1;fontSize=14;" value="Grafana Loki&amp;#xa;(Log Aggregation)" vertex="1">
+          <mxGeometry height="140" width="140" x="1160" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-8" parent="1" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://upload.wikimedia.org/wikipedia/commons/a/a1/Grafana_logo.svg;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="1200" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-9" edge="1" parent="1" source="9LySiJVitfpNLntl-1ey-2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;fontSize=12;fontStyle=1;labelBackgroundColor=#ffffff;" target="9LySiJVitfpNLntl-1ey-3" value="File Paths">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-10" edge="1" parent="1" source="9LySiJVitfpNLntl-1ey-3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;fontSize=12;fontStyle=1;labelBackgroundColor=#ffffff;" target="9LySiJVitfpNLntl-1ey-4" value="Targets[]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-11" edge="1" parent="1" source="9LySiJVitfpNLntl-1ey-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;fontSize=12;fontStyle=1;labelBackgroundColor=#ffffff;" target="9LySiJVitfpNLntl-1ey-5" value="Raw Log Lines">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-12" edge="1" parent="1" source="9LySiJVitfpNLntl-1ey-5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;fontSize=12;fontStyle=1;labelBackgroundColor=#ffffff;" target="9LySiJVitfpNLntl-1ey-6" value="Processed Logs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9LySiJVitfpNLntl-1ey-13" edge="1" parent="1" source="9LySiJVitfpNLntl-1ey-6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#d35400;fontSize=12;fontStyle=1;labelBackgroundColor=#ffffff;" target="9LySiJVitfpNLntl-1ey-7" value="HTTP/gRPC&amp;#xa;Push API">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

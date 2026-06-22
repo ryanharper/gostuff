@@ -97,4 +97,101 @@ class AlloyToVectorMigrator:
         else:
             inputs_str = '["<TODO: Add Inputs>"]'
         
-        for
+        for match in matches:
+            label, url = match.groups()
+            base_url = url.replace("/loki/api/v1/push", "").replace("/api/prom/push", "")
+            
+            self.vector_config["sinks"]["loki_" + label] = {
+                "type": '"loki"',
+                "inputs": inputs_str,
+                "endpoint": '"{}"'.format(base_url),
+                "encoding": '{ codec = "json" }'
+            }
+
+    def _map_metric_sources(self):
+        pattern = r'prometheus\.scrape\s+"([^"]+)".*?__address__"\s*=\s*"([^"]+)"'
+        matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
+        
+        for match in matches:
+            label, address = match.groups()
+            endpoint = address if address.startswith("http") else "http://{}/metrics".format(address)
+            
+            self.vector_config["sources"]["metrics_" + label] = {
+                "type": '"prometheus_scrape"',
+                "endpoints": '["{}"]'.format(endpoint)
+            }
+
+    def _map_metric_sinks(self):
+        pattern = r'prometheus\.remote_write\s+"([^"]+)".*?url\s*=\s*"([^"]+)"'
+        matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
+        
+        metric_inputs = ['"{}"'.format(k) for k in self.vector_config["sources"].keys() if k.startswith("metrics_")]
+        if metric_inputs:
+            inputs_str = "[" + ", ".join(metric_inputs) + "]"
+        else:
+            inputs_str = '["<TODO: Add Inputs>"]'
+        
+        for match in matches:
+            label, url = match.groups()
+            self.vector_config["sinks"]["prom_write_" + label] = {
+                "type": '"prometheus_remote_write"',
+                "inputs": inputs_str,
+                "endpoint": '"{}"'.format(url)
+            }
+
+    def _generate_toml(self) -> str:
+        lines = []
+        
+        if self.vector_config["sources"]:
+            for name, config in self.vector_config["sources"].items():
+                lines.append(f"[sources.{name}]")
+                for key, val in config.items():
+                    lines.append(f"{key} = {val}")
+                lines.append("")
+            
+        if self.vector_config["transforms"]:
+            for name, config in self.vector_config["transforms"].items():
+                lines.append(f"[transforms.{name}]")
+                for key, val in config.items():
+                    lines.append(f"{key} = {val}")
+                lines.append("")
+
+        if self.vector_config["sinks"]:
+            for name, config in self.vector_config["sinks"].items():
+                lines.append(f"[sinks.{name}]")
+                for key, val in config.items():
+                    lines.append(f"{key} = {val}")
+                lines.append("")
+            
+        return "\n".join(lines).strip()
+
+def main():
+    parser = argparse.ArgumentParser(description="Transpile Grafana Alloy configs to Datadog Vector TOML.")
+    parser.add_argument("-i", "--input", required=True, help="Path to the input Alloy configuration file")
+    parser.add_argument("-o", "--output", required=True, help="Path to the output Vector TOML file")
+    
+    args = parser.parse_args()
+
+    try:
+        with open(args.input, 'r', encoding='utf-8') as f:
+            alloy_content = f.read()
+    except FileNotFoundError:
+        print(f"Error: Input file '{args.input}' not found.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error reading input file: {e}")
+        sys.exit(1)
+
+    migrator = AlloyToVectorMigrator(alloy_content)
+    vector_toml = migrator.migrate()
+
+    try:
+        with open(args.output, 'w', encoding='utf-8') as f:
+            f.write(vector_toml)
+        print(f"Success: Migrated configuration written to {args.output}")
+    except Exception as e:
+        print(f"Error writing to output file: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

@@ -10,9 +10,11 @@ class AlloyToVectorMigrator:
             "transforms": {},
             "sinks": {}
         }
+        # Tracks the current active outputs of the log pipeline 
+        # so sinks and downstream transforms route correctly.
+        self.log_pipeline_tails = []
         
     def migrate(self) -> str:
-        """Executes the extraction and generates the Vector TOML."""
         self._map_log_sources()
         self._map_log_transforms()
         self._map_log_sinks()
@@ -21,56 +23,88 @@ class AlloyToVectorMigrator:
         return self._generate_toml()
 
     def _map_log_sources(self):
-        """Maps Alloy local.file_match to Vector file sources."""
-        pattern = r'local\.file_match\s+"([^"]+)".*?__path__"\s*=\s*"([^"]+)"'
-        matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
+        """Maps Alloy local.file_match to Vector file sources. Handles bare keys and extracts labels."""
+        if "local.file_match" not in self.alloy_config:
+            return
+            
+        # Split by block to isolate environments and avoid regex bleed
+        blocks = self.alloy_config.split("local.file_match")[1:]
         
-        for match in matches:
-            label, path = match.groups()
-            self.vector_config["sources"][f"logs_{label}"] = {
+        for block in blocks:
+            # 1. Extract block name (e.g., "fer")
+            name_match = re.search(r'^\s*"([^"]+)"', block)
+            if not name_match:
+                continue
+            label = name_match.group(1)
+            source_name = f"logs_{label}"
+            
+            # 2. Extract paths (handles both `__path__ = "..."` and `"__path__" = "..."`)
+            paths = re.findall(r'(?:__path__|"__path__")\s*=\s*"([^"]+)"', block)
+            if not paths:
+                continue
+                
+            paths_str = ", ".join(f'"{p}"' for p in set(paths))
+            
+            self.vector_config["sources"][source_name] = {
                 "type": '"file"',
-                "include": f'["{path}"]'
+                "include": f"[{paths_str}]"
             }
+            
+            # 3. Extract static labels (e.g., application_name = "testapp")
+            # We filter for quoted strings to safely build VRL logic
+            label_matches = re.findall(r'([a-zA-Z0-9_]+)\s*=\s*"([^"]+)"', block)
+            custom_labels = {k: v for k, v in label_matches if k not in ["__path__", "url", "expression"]}
+            
+            # 4. In Vector, custom labels are appended via a VRL remap transform
+            if custom_labels:
+                transform_name = f"add_labels_{label}"
+                vrl_lines = [f'.{k} = "{v}"' for k, v in custom_labels.items()]
+                vrl_source = "'''\n" + "\n".join(vrl_lines) + "\n'''"
+                
+                self.vector_config["transforms"][transform_name] = {
+                    "type": '"remap"',
+                    "inputs": f'["{source_name}"]',
+                    "source": vrl_source
+                }
+                # The pipeline tail is now the transform, not the source
+                self.log_pipeline_tails.append(transform_name)
+            else:
+                # The pipeline tail remains the raw source
+                self.log_pipeline_tails.append(source_name)
 
     def _map_log_transforms(self):
-        """
-        Extracts stage.regex from loki.process and converts to Vector VRL.
-        Cleans up Alloy's double-escaped HCL regex into Vector raw strings.
-        """
-        # Finds: stage.regex { expression = "(?P<time>\\d+)..." }
+        """Extracts stage.regex and maps to Vector VRL."""
         pattern = r'stage\.regex\s*\{.*?expression\s*=\s*"([^"]+)".*?\}'
-        matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
+        matches = list(re.finditer(pattern, self.alloy_config, re.DOTALL))
         
-        log_inputs = [f'"{k}"' for k in self.vector_config["sources"].keys() if k.startswith("logs_")]
-        inputs_str = f"[{', '.join(log_inputs)}]" if log_inputs else '["<TODO: Add Inputs>"]'
+        if not matches or not self.log_pipeline_tails:
+            return
 
+        # Connect the inputs from wherever the pipeline currently is (sources or label transforms)
+        inputs_str = f"[{', '.join(f'\"{t}\"' for t in self.log_pipeline_tails)}]"
+        
         for i, match in enumerate(matches):
             raw_expression = match.group(1)
-            # Convert River/HCL double-escapes (\\d) to standard regex (\d) for VRL
             cleaned_regex = raw_expression.replace('\\\\', '\\')
             
-            # Create a VRL remap transform
             vrl_source = f"'''\n. |= parse_regex!(.message, r'{cleaned_regex}')\n'''"
+            transform_name = f"parse_regex_{i}"
             
-            self.vector_config["transforms"][f"parse_regex_{i}"] = {
+            self.vector_config["transforms"][transform_name] = {
                 "type": '"remap"',
                 "inputs": inputs_str,
                 "source": vrl_source
             }
+            
+            # Update the pipeline tail to point to this new regex transform
+            self.log_pipeline_tails = [transform_name]
 
     def _map_log_sinks(self):
         """Maps Alloy loki.write to Vector loki sinks."""
         pattern = r'loki\.write\s+"([^"]+)".*?url\s*=\s*"([^"]+)"'
         matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
         
-        # If we created transforms, route from the transform to the sink. 
-        # Otherwise, route directly from the source.
-        if self.vector_config["transforms"]:
-            inputs = [f'"{k}"' for k in self.vector_config["transforms"].keys()]
-        else:
-            inputs = [f'"{k}"' for k in self.vector_config["sources"].keys() if k.startswith("logs_")]
-            
-        inputs_str = f"[{', '.join(inputs)}]" if inputs else '["<TODO: Add Inputs>"]'
+        inputs_str = f"[{', '.join(f'\"{t}\"' for t in self.log_pipeline_tails)}]" if self.log_pipeline_tails else '["<TODO: Add Inputs>"]'
         
         for match in matches:
             label, url = match.groups()
@@ -84,7 +118,6 @@ class AlloyToVectorMigrator:
             }
 
     def _map_metric_sources(self):
-        """Maps Alloy prometheus.scrape to Vector prometheus_scrape sources."""
         pattern = r'prometheus\.scrape\s+"([^"]+)".*?__address__"\s*=\s*"([^"]+)"'
         matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
         
@@ -98,7 +131,6 @@ class AlloyToVectorMigrator:
             }
 
     def _map_metric_sinks(self):
-        """Maps Alloy prometheus.remote_write to Vector prometheus_remote_write sinks."""
         pattern = r'prometheus\.remote_write\s+"([^"]+)".*?url\s*=\s*"([^"]+)"'
         matches = re.finditer(pattern, self.alloy_config, re.DOTALL)
         
@@ -114,10 +146,8 @@ class AlloyToVectorMigrator:
             }
 
     def _generate_toml(self) -> str:
-        """Formats the parsed dictionary into a Vector TOML string."""
         lines = []
         
-        # Write Sources
         if self.vector_config["sources"]:
             for name, config in self.vector_config["sources"].items():
                 lines.append(f"[sources.{name}]")
@@ -125,7 +155,6 @@ class AlloyToVectorMigrator:
                     lines.append(f"{key} = {val}")
                 lines.append("")
             
-        # Write Transforms
         if self.vector_config["transforms"]:
             for name, config in self.vector_config["transforms"].items():
                 lines.append(f"[transforms.{name}]")
@@ -133,7 +162,6 @@ class AlloyToVectorMigrator:
                     lines.append(f"{key} = {val}")
                 lines.append("")
 
-        # Write Sinks
         if self.vector_config["sinks"]:
             for name, config in self.vector_config["sinks"].items():
                 lines.append(f"[sinks.{name}]")

@@ -81,7 +81,8 @@ class AlloyToVectorMigrator:
             return
 
         # Connect the inputs from wherever the pipeline currently is (sources or label transforms)
-        inputs_str = f"[{', '.join(f'\"{t}\"' for t in self.log_pipeline_tails)}]"
+        formatted_tails = [f'"{t}"' for t in self.log_pipeline_tails]
+        inputs_str = f"[{', '.join(formatted_tails)}]"
         
         for i, match in enumerate(matches):
             raw_expression = match.group(1)

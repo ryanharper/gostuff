@@ -1,0 +1,75 @@
+// =========================================================
+// 1. PROMETHEUS PIPELINE: Managing Node Exporter Cardinality
+// =========================================================
+
+prometheus.scrape "node" {
+  targets    = [{"__address__" = "localhost:9100"}]
+  forward_to = [prometheus.relabel.cardinality_filter.receiver]
+}
+
+// Intercept the metrics to prune unwanted labels and noisy series
+prometheus.relabel "cardinality_filter" {
+  
+  // ACTION 1: Strip specific high-cardinality labels from ALL metrics
+  rule {
+    action = "labeldrop"
+    // Modify this regex to include the exact labels you want to nuke.
+    // Example: Dropping granular filesystem or container IDs.
+    regex  = "(device|mountpoint|fstype|pod_ip|uid|session_id)"
+  }
+
+  // ACTION 2: Entirely drop low-value, high-volume metrics
+  rule {
+    action        = "drop"
+    source_labels = ["__name__"]
+    // Modify this regex for noisy metrics you don't use for alerting/dashboards.
+    regex         = "node_nfs_.*|node_filesystem_device_error|node_network_.*_errs_total"
+  }
+
+  forward_to = [prometheus.remote_write.mimir.receiver] 
+}
+
+
+// =========================================================
+// 2. LOKI PIPELINE: Preventing Index Explosions in logs/metrics
+// =========================================================
+
+// Assuming you are tailing logs or receiving them via a target
+loki.source.file "app_logs" {
+  targets    = local.file_match.logs.targets
+  forward_to = [loki.process.filter_cardinality.receiver]
+}
+
+// Process logs and strictly control what becomes an indexed label
+loki.process "filter_cardinality" {
+  
+  // Example: Extracting fields from a JSON log
+  stage.json {
+    expressions = {
+      level     = "level",
+      app       = "app_name",
+      trace_id  = "traceId",  // Danger: High cardinality
+      client_ip = "clientIp", // Danger: High cardinality
+    }
+  }
+
+  // ACTION 1: Explicitly drop high-cardinality keys so they NEVER become indexed labels
+  // They will still exist in the log line, but won't blow up the index.
+  stage.label_drop {
+    values = ["trace_id", "client_ip", "filename"]
+  }
+
+  // ACTION 2: (Optional) If you are generating metrics from logs
+  stage.metrics {
+    metric.counter "app_errors_total" {
+      type        = "counter"
+      description = "Count of app errors"
+      source      = "level"
+      value       = "error"
+      // Because stage.label_drop ran first, unbounded labels like client_ip 
+      // will not leak into this generated time series.
+    }
+  }
+
+  forward_to = [loki.write.mimir.receiver]
+}

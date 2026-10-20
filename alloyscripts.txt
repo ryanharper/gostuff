@@ -102,3 +102,162 @@ otelcol.exporter.prometheus "default" {
 }
 
 
+#####
+$BaseDir = "C:\Program Files\GrafanaLabs\Alloy"
+New-Item -ItemType Directory -Force -Path "$BaseDir\textfile_inputs", "$BaseDir\scripts" | Out-Null
+
+@'
+$OutFile  = "C:\Program Files\GrafanaLabs\Alloy\textfile_inputs\svchost_processes.prom"
+$TempFile = "$OutFile.tmp"
+
+# 1. Map running svchost PIDs to their hosted Windows Service names
+$SvcMap = @{}
+Get-CimInstance Win32_Service -Filter "State='Running'" | Where-Object ProcessId -gt 0 | ForEach-Object {
+    $SvcMap[[uint32]$_.ProcessId] += @($_.Name)
+}
+
+# 2. Fetch raw performance counters for all svchost instances (same source as windows_exporter)
+$RawProcs = Get-CimInstance Win32_PerfRawData_PerfProc_Process -Filter "Name LIKE 'svchost%'"
+
+# 3. Group by resolved service name (handles shared svchost PIDs and avoids collisions)
+$Grouped =$RawProcs | Group-Object {
+    $PidVal = [uint32]$_.IDProcess
+    if ($SvcMap.ContainsKey($PidVal)) {
+        "svchost_" + (($SvcMap[$PidVal] | Sort-Object) -join "_")
+    } else {
+        "svchost_unmapped"
+    }
+}
+
+$Lines = [System.Collections.Generic.List[string]]::new()
+
+# Define metadata headers (prefixed with custom_ to avoid internal exporter collision before relabeling)
+$Headers = @(
+    "# HELP custom_windows_process_cpu_time_total Total processor time in seconds"
+    "# TYPE custom_windows_process_cpu_time_total counter"
+    "# HELP custom_windows_process_handles Total number of handles the process has open"
+    "# TYPE custom_windows_process_handles gauge"
+    "# HELP custom_windows_process_io_bytes_total Bytes issued to I/O operations"
+    "# TYPE custom_windows_process_io_bytes_total counter"
+    "# HELP custom_windows_process_io_operations_total I/O operations issued"
+    "# TYPE custom_windows_process_io_operations_total counter"
+    "# HELP custom_windows_process_page_faults_total Page faults by the threads executing in this process"
+    "# TYPE custom_windows_process_page_faults_total counter"
+    "# HELP custom_windows_process_page_file_bytes Current number of bytes this process has used in the paging file(s)"
+    "# TYPE custom_windows_process_page_file_bytes gauge"
+    "# HELP custom_windows_process_pool_bytes Pool bytes is the size of theiemanaged memory pools"
+    "# TYPE custom_windows_process_pool_bytes gauge"
+    "# HELP custom_windows_process_priority_base Current base priority of this process"
+    "# TYPE custom_windows_process_priority_base gauge"
+    "# HELP custom_windows_process_private_bytes Current number of bytes this process has allocated that cannot be shared"
+    "# TYPE custom_windows_process_private_bytes gauge"
+    "# HELP custom_windows_process_start_time Time of process start in unix epoch seconds"
+    "# TYPE custom_windows_process_start_time gauge"
+    "# HELP custom_windows_process_threads Number of threads currently active in this process"
+    "# TYPE custom_windows_process_threads gauge"
+    "# HELP custom_windows_process_virtual_bytes Current size in bytes of the virtual address space the process is using"
+    "# TYPE custom_windows_process_virtual_bytes gauge"
+    "# HELP custom_windows_process_working_set_bytes Current size of the Working Set of this process in bytes"
+    "# TYPE custom_windows_process_working_set_bytes gauge"
+    "# HELP custom_windows_process_working_set_peak_bytes Maximum size of the Working Set of this process in bytes"
+    "# TYPE custom_windows_process_working_set_peak_bytes gauge"
+    "# HELP custom_windows_process_working_set_private_bytes Size of the Working Set in bytes that is use for this process only"
+    "# TYPE custom_windows_process_working_set_private_bytes gauge"
+)
+$Lines.AddRange([string[]]$Headers)
+
+foreach ($Group in$Grouped) {
+    $ProcLabel =$Group.Name -replace '[^a-zA-Z0-9_-]', '_'
+    $Items     =$Group.Group
+
+    # PerfProc stores CPU time in 100-nanosecond ticks (1 second = 10,000,000 ticks)
+    $PrivSeconds = [math]::Round((($Items | Measure-Object PercentPrivilegedTime -Sum).Sum / 10000000.0), 6)
+    $UserSeconds = [math]::Round((($Items | Measure-Object PercentUserTime -Sum).Sum / 10000000.0), 6)
+
+    $Handles      = ($Items | Measure-Object HandleCount -Sum).Sum
+    $Threads      = ($Items | Measure-Object ThreadCount -Sum).Sum
+    $PageFaults   = ($Items | Measure-Object PageFaultsPersec -Sum).Sum
+    $PageFile     = ($Items | Measure-Object PageFileBytes -Sum).Sum
+    $PoolNonpaged = ($Items | Measure-Object PoolNonpagedBytes -Sum).Sum
+    $PoolPaged    = ($Items | Measure-Object PoolPagedBytes -Sum).Sum
+    $PriorityBase = ($Items | Measure-Object PriorityBase -Maximum).Maximum
+    $PrivateBytes = ($Items | Measure-Object PrivateBytes -Sum).Sum
+    $VirtualBytes = ($Items | Measure-Object VirtualBytes -Sum).Sum
+    $WorkingSet   = ($Items | Measure-Object WorkingSet -Sum).Sum
+    $WsPeak       = ($Items | Measure-Object WorkingSetPeak -Sum).Sum
+    $WsPrivate    = ($Items | Measure-Object WorkingSetPrivate -Sum).Sum
+
+    $IoReadBytes  = ($Items | Measure-Object IOReadBytesPersec -Sum).Sum
+    $IoWriteBytes = ($Items | Measure-Object IOWriteBytesPersec -Sum).Sum
+    $IoOtherBytes = ($Items | Measure-Object IOOtherBytesPersec -Sum).Sum
+
+    $IoReadOps    = ($Items | Measure-Object IOReadOperationsPersec -Sum).Sum
+    $IoWriteOps   = ($Items | Measure-Object IOWriteOperationsPersec -Sum).Sum
+    $IoOtherOps   = ($Items | Measure-Object IOOtherOperationsPersec -Sum).Sum
+
+    # Convert Windows FileTime (100ns ticks since Jan 1, 1601) to Unix Epoch seconds
+    $RawStart  = ($Items | Measure-Object ElapsedTime -Minimum).Minimum
+    $UnixStart = if ($RawStart -gt 116444736000000000) { [math]::Round((($RawStart - 116444736000000000) / 10000000.0), 0)
+    } else { 0 }
+
+    $Lines.Add("custom_windows_process_cpu_time_total{process=`"$ProcLabel`",mode=`"privileged`"} $PrivSeconds")
+    $Lines.Add("custom_windows_process_cpu_time_total{process=`"$ProcLabel`",mode=`"user`"} $UserSeconds")
+    $Lines.Add("custom_windows_process_handles{process=`"$ProcLabel`"} $Handles")
+    $Lines.Add("custom_windows_process_io_bytes_total{process=`"$ProcLabel`",mode=`"read`"} $IoReadBytes")
+    $Lines.Add("custom_windows_process_io_bytes_total{process=`"$ProcLabel`",mode=`"write`"} $IoWriteBytes")
+    $Lines.Add("custom_windows_process_io_bytes_total{process=`"$ProcLabel`",mode=`"other`"} $IoOtherBytes")
+    $Lines.Add("custom_windows_process_io_operations_total{process=`"$ProcLabel`",mode=`"read`"} $IoReadOps")
+    $Lines.Add("custom_windows_process_io_operations_total{process=`"$ProcLabel`",mode=`"write`"} $IoWriteOps")
+    $Lines.Add("custom_windows_process_io_operations_total{process=`"$ProcLabel`",mode=`"other`"} $IoOtherOps")
+    $Lines.Add("custom_windows_process_page_faults_total{process=`"$ProcLabel`"} $PageFaults")
+    $Lines.Add("custom_windows_process_page_file_bytes{process=`"$ProcLabel`"} $PageFile")
+    $Lines.Add("custom_windows_process_pool_bytes{process=`"$ProcLabel`",pool=`"nonpaged`"} $PoolNonpaged")
+    $Lines.Add("custom_windows_process_pool_bytes{process=`"$ProcLabel`",pool=`"paged`"} $PoolPaged")
+    $Lines.Add("custom_windows_process_priority_base{process=`"$ProcLabel`"} $PriorityBase")
+    $Lines.Add("custom_windows_process_private_bytes{process=`"$ProcLabel`"} $PrivateBytes")
+    $Lines.Add("custom_windows_process_start_time{process=`"$ProcLabel`"} $UnixStart")
+    $Lines.Add("custom_windows_process_threads{process=`"$ProcLabel`"} $Threads")
+    $Lines.Add("custom_windows_process_virtual_bytes{process=`"$ProcLabel`"} $VirtualBytes")
+    $Lines.Add("custom_windows_process_working_set_bytes{process=`"$ProcLabel`"} $WorkingSet")
+    $Lines.Add("custom_windows_process_working_set_peak_bytes{process=`"$ProcLabel`"} $WsPeak")
+    $Lines.Add("custom_windows_process_working_set_private_bytes{process=`"$ProcLabel`"} $WsPrivate")
+}
+
+[System.IO.File]::WriteAllLines($TempFile,$Lines, (New-Object System.Text.UTF8Encoding $false))
+Move-Item -Path $TempFile -Destination$OutFile -Force
+'@ | Set-Content -Path "$BaseDir\scripts\Export-SvchostMetrics.ps1" -Encoding UTF8
+
+####
+prometheus.exporter.windows "default" {
+  enabled_collectors = ["cpu", "logical_disk", "net", "os", "service", "system", "process", "textfile"]
+
+  process {
+    // Exclude svchost from the native collector so our textfile script handles it
+    exclude = "^(svchost|Idle)$"
+  }
+
+  textfile {
+    text_file_directory = "C:\\Program Files\\GrafanaLabs\\Alloy\\textfile_inputs"
+  }
+}
+
+prometheus.scrape "windows" {
+  targets    = prometheus.exporter.windows.default.targets
+  forward_to = [prometheus.relabel.normalize_svchost.receiver]
+}
+
+prometheus.relabel "normalize_svchost" {
+  forward_to = [prometheus.remote_write.default.receiver]
+
+  // Rename custom_windows_process_* -> windows_process_* seamlessly
+  rule {
+    source_labels = ["__name__"]
+    regex         = "^custom_(windows_process_.*)$"
+    replacement   = "$1"
+    target_label  = "__name__"
+    action        = "replace"
+  }
+}
+
+
+

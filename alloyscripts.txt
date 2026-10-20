@@ -1,0 +1,104 @@
+$BaseDir = "C:\Program Files\GrafanaLabs\Alloy"
+New-Item -ItemType Directory -Force -Path "$BaseDir\textfile_inputs", "$BaseDir\scripts" | Out-Null
+
+@'
+$OutFile  = "C:\Program Files\GrafanaLabs\Alloy\textfile_inputs\svchost_services.prom"
+$TempFile = "$OutFile.tmp"
+
+# Map running svchost PIDs to their hosted Windows service names
+$SvcMap = @{}
+Get-CimInstance Win32_Service -Filter "State='Running'" | Where-Object ProcessId -gt 0 | ForEach-Object {
+    $SvcMap[[int]$_.ProcessId] += @($_.Name)
+}
+
+$Lines = @(
+    "# HELP windows_svchost_cpu_seconds_total Total CPU time spent by svchost service"
+    "# TYPE windows_svchost_cpu_seconds_total counter"
+    "# HELP windows_svchost_working_set_bytes Memory working set bytes by svchost service"
+    "# TYPE windows_svchost_working_set_bytes gauge"
+)
+
+# Group by resolved service name so shared service names never emit duplicate series
+$Grouped = Get-Process svchost -ErrorAction SilentlyContinue | Group-Object {
+    if ($SvcMap.ContainsKey($_.Id)) { ($SvcMap[$_.Id] | Sort-Object) -join "_" }
+    else { "svchost_unmapped" }
+}
+
+foreach ($Group in$Grouped) {
+    $SvcName =$Group.Name -replace '[^a-zA-Z0-9_-]', '_'
+    $CpuSum  = [math]::Round(($Group.Group | Measure-Object CPU -Sum).Sum, 4)
+    $MemSum  = ($Group.Group | Measure-Object WorkingSet64 -Sum).Sum
+
+    $Lines += "windows_svchost_cpu_seconds_total{process=`"svchost`",service=`"$SvcName`"} $CpuSum"
+    $Lines += "windows_svchost_working_set_bytes{process=`"svchost`",service=`"$SvcName`"} $MemSum"
+}
+
+# Write atomically using UTF-8 without BOM so Alloy never reads a partial file
+[System.IO.File]::WriteAllLines($TempFile,$Lines, (New-Object System.Text.UTF8Encoding $false))
+Move-Item -Path $TempFile -Destination$OutFile -Force
+'@ | Set-Content -Path "$BaseDir\scripts\Export-SvchostMetrics.ps1" -Encoding UTF8
+
+#####
+
+$Action    = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"C:\Program Files\GrafanaLabs\Alloy\scripts\Export-SvchostMetrics.ps1`""
+$Trigger   = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1)$Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+Register-ScheduledTask -TaskName "Alloy-Svchost-Mapper" -Action $Action -Trigger $Trigger -Principal$Principal -Force
+
+###
+prometheus.exporter.windows "default" {
+  enabled_collectors = ["cpu", "logical_disk", "net", "os", "service", "system", "process", "textfile"]
+
+  process {
+    // Prevent raw PID cardinality and duplicate series from svchost
+    exclude = "^(svchost|Idle)$"
+  }
+
+  textfile {
+    text_file_directory = "C:\\Program Files\\GrafanaLabs\\Alloy\\textfile_inputs"
+  }
+}
+
+#####
+
+prometheus.scrape "windows" {
+  targets    = prometheus.exporter.windows.default.targets
+  // Forward to OTel receiver instead of directly to remote_write
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+}
+
+otelcol.receiver.prometheus "default" {
+  output {
+    metrics = [otelcol.processor.transform.drop_pids.input]
+  }
+}
+
+otelcol.processor.transform "drop_pids" {
+  error_mode = "ignore"
+
+  metric_statements {
+    context = "datapoint"
+    // 1. Delete the high-cardinality process_id and creating_process_id labels
+    statements = [
+      "delete_key(attributes, \"process_id\")",
+      "delete_key(attributes, \"creating_process_id\")",
+    ]
+  }
+
+  metric_statements {
+    context = "metric"
+    // 2. Sum colliding process series (like multiple chrome.exe or svchost.exe) into one series
+    statements = [
+      "aggregate_metric_labels(\"sum\") where IsMatch(name, \"^windows_process_.*\")",
+    ]
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+

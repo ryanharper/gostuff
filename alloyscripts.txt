@@ -1,4 +1,4 @@
-hi$BaseDir = "C:\Program Files\GrafanaLabs\Alloy"
+he hi$BaseDir = "C:\Program Files\GrafanaLabs\Alloy"
 New-Item -ItemType Directory -Force -Path "$BaseDir\textfile_inputs", "$BaseDir\scripts" | Out-Null
 
 @'
@@ -597,6 +597,156 @@ foreach ($Group in$Grouped) {
 Move-Item -Path $TempFile -Destination$OutFile -Force
 '@ | Set-Content -Path "$BaseDir\scripts\Export-SvchostMetrics.ps1" -Encoding UTF8
 
+
+####
+
+$BaseDir = "C:\Program Files\GrafanaLabs\Alloy"
+New-Item -ItemType Directory -Force -Path "$BaseDir\textfile_inputs", "$BaseDir\scripts" | Out-Null
+
+# Remove old .prom files so stale custom_ metrics don't linger
+Remove-Item "$BaseDir\textfile_inputs\*.prom" -Force -ErrorAction SilentlyContinue
+
+@'
+$OutFile  = "C:\Program Files\GrafanaLabs\Alloy\textfile_inputs\windows_processes.prom"
+$TempFile = "$OutFile.tmp"
+
+# 1. Get all Session 0 ("Services") PIDs - automatically excludes RDP-Tcp#* and Console sessions
+$Session0Pids = @{}
+Get-CimInstance Win32_Process -Filter "SessionId = 0" -Property ProcessId, Name | ForEach-Object {
+    $Session0Pids[[uint32]$_.ProcessId] =$_.Name
+}
+
+# 2. Map running Windows Services by PID (for svchost, sqlservr, sqlagent, dllhost)
+$SvcMap = @{}
+Get-CimInstance Win32_Service -Filter "State='Running'" -Property ProcessId, Name | Where-Object ProcessId -gt 0 | ForEach-Object {
+    $SvcMap[[uint32]$_.ProcessId] += @($_.Name)
+}
+
+# 3. Query PerfProc counters for Session 0 processes only (excluding _Total, Idle, System, and PID 0)
+$RawProcs = Get-CimInstance Win32_PerfRawData_PerfProc_Process \vert{} Where-Object {$_.IDProcess -gt 0 -and
+    $_.Name -notmatch '^(?i)(_Total\vert{}Idle\vert{}System)$' -and
+    $Session0Pids.ContainsKey([uint32]$_.IDProcess)
+}
+
+# 4. Group by deterministic process name:
+#    - svchost, sqlservr, sqlagent, dllhost -> split by "<BaseName>_<ServiceName>"
+#    - wmiapsrv, WmiPrvSE, conhost, and all other Session 0 processes -> collapsed by BaseName
+$Grouped =$RawProcs | Group-Object {
+    $PidVal   = [uint32]$_.IDProcess
+    # Strip the #1, #2 instance suffix that Windows PerfProc appends to duplicate binaries
+    $BaseName = ($_.Name -replace '#\d+$', '')
+
+    if ($BaseName -match '^(?i)(svchost\vert{}sqlservr\vert{}sqlagent\vert{}dllhost)$') {
+        $Prefix =$BaseName.ToLower()
+        if ($SvcMap.ContainsKey($PidVal)) {$SvcNames = ($SvcMap[$PidVal] | Sort-Object) -join "_"
+            "${Prefix}_${SvcNames}"
+        } else {
+            "${Prefix}_unmapped"
+        }
+    }
+    else {
+        # Collapses multiple wmiapsrv, WmiPrvSE, conhost, TiWorker, etc. into one unique group per binary
+        $BaseName
+    }
+}
+
+$Lines = [System.Collections.Generic.List[string]]::new()
+
+$Headers = @(
+    "# HELP windows_process_cpu_time_total Total processor time in seconds"
+    "# TYPE windows_process_cpu_time_total counter"
+    "# HELP windows_process_handles Total number of handles the process has open"
+    "# TYPE windows_process_handles gauge"
+    "# HELP windows_process_io_bytes_total Bytes issued to I/O operations"
+    "# TYPE windows_process_io_bytes_total counter"
+    "# HELP windows_process_io_operations_total I/O operations issued"
+    "# TYPE windows_process_io_operations_total counter"
+    "# HELP windows_process_page_faults_total Page faults by the threads executing in this process"
+    "# TYPE windows_process_page_faults_total counter"
+    "# HELP windows_process_page_file_bytes Current number of bytes this process has used in the paging file(s)"
+    "# TYPE windows_process_page_file_bytes gauge"
+    "# HELP windows_process_pool_bytes Pool bytes is the size of the managed memory pools"
+    "# TYPE windows_process_pool_bytes gauge"
+    "# HELP windows_process_priority_base Current base priority of this process"
+    "# TYPE windows_process_priority_base gauge"
+    "# HELP windows_process_private_bytes Current number of bytes this process has allocated that cannot be shared"
+    "# TYPE windows_process_private_bytes gauge"
+    "# HELP windows_process_start_time Time of process start in unix epoch seconds"
+    "# TYPE windows_process_start_time gauge"
+    "# HELP windows_process_threads Number of threads currently active in this process"
+    "# TYPE windows_process_threads gauge"
+    "# HELP windows_process_virtual_bytes Current size in bytes of the virtual address space the process is using"
+    "# TYPE windows_process_virtual_bytes gauge"
+    "# HELP windows_process_working_set_bytes Current size of the Working Set of this process in bytes"
+    "# TYPE windows_process_working_set_bytes gauge"
+    "# HELP windows_process_working_set_peak_bytes Maximum size of the Working Set of this process in bytes"
+    "# TYPE windows_process_working_set_peak_bytes gauge"
+    "# HELP windows_process_working_set_private_bytes Size of the Working Set in bytes that is used for this process only"
+    "# TYPE windows_process_working_set_private_bytes gauge"
+)
+$Lines.AddRange([string[]]$Headers)
+
+foreach ($Group in$Grouped) {
+    # Sanitize characters like '$' in SQL instance names to '_'
+    $ProcLabel =$Group.Name -replace '[^a-zA-Z0-9_-]', '_'
+    $Items     =$Group.Group
+
+    $PrivSeconds  = [math]::Round((($Items | Measure-Object PercentPrivilegedTime -Sum).Sum / 10000000.0), 6)
+    $UserSeconds  = [math]::Round((($Items | Measure-Object PercentUserTime -Sum).Sum / 10000000.0), 6)
+    $Handles      = ($Items | Measure-Object HandleCount -Sum).Sum
+    $Threads      = ($Items | Measure-Object ThreadCount -Sum).Sum
+    $PageFaults   = ($Items | Measure-Object PageFaultsPersec -Sum).Sum
+    $PageFile     = ($Items | Measure-Object PageFileBytes -Sum).Sum
+    $PoolNonpaged = ($Items | Measure-Object PoolNonpagedBytes -Sum).Sum
+    $PoolPaged    = ($Items | Measure-Object PoolPagedBytes -Sum).Sum
+    $PriorityBase = ($Items | Measure-Object PriorityBase -Maximum).Maximum
+    $PrivateBytes = ($Items | Measure-Object PrivateBytes -Sum).Sum
+    $VirtualBytes = ($Items | Measure-Object VirtualBytes -Sum).Sum
+    $WorkingSet   = ($Items | Measure-Object WorkingSet -Sum).Sum
+    $WsPeak       = ($Items | Measure-Object WorkingSetPeak -Sum).Sum
+    $WsPrivate    = ($Items | Measure-Object WorkingSetPrivate -Sum).Sum
+
+    $IoReadBytes  = ($Items | Measure-Object IOReadBytesPersec -Sum).Sum
+    $IoWriteBytes = ($Items | Measure-Object IOWriteBytesPersec -Sum).Sum
+    $IoOtherBytes = ($Items | Measure-Object IOOtherBytesPersec -Sum).Sum
+
+    $IoReadOps    = ($Items | Measure-Object IOReadOperationsPersec -Sum).Sum
+    $IoWriteOps   = ($Items | Measure-Object IOWriteOperationsPersec -Sum).Sum
+    $IoOtherOps   = ($Items | Measure-Object IOOtherOperationsPersec -Sum).Sum
+
+    $RawStart  = ($Items | Measure-Object ElapsedTime -Minimum).Minimum
+    $UnixStart = if ($RawStart -gt 116444736000000000) { [math]::Round((($RawStart - 116444736000000000) / 10000000.0), 0)
+    } else { 0 }
+
+    $Lines.Add("windows_process_cpu_time_total{process=`"$ProcLabel`",mode=`"privileged`"} $PrivSeconds")
+    $Lines.Add("windows_process_cpu_time_total{process=`"$ProcLabel`",mode=`"user`"} $UserSeconds")
+    $Lines.Add("windows_process_handles{process=`"$ProcLabel`"} $Handles")
+    $Lines.Add("windows_process_io_bytes_total{process=`"$ProcLabel`",mode=`"read`"} $IoReadBytes")
+    $Lines.Add("windows_process_io_bytes_total{process=`"$ProcLabel`",mode=`"write`"} $IoWriteBytes")
+    $Lines.Add("windows_process_io_bytes_total{process=`"$ProcLabel`",mode=`"other`"} $IoOtherBytes")
+    $Lines.Add("windows_process_io_operations_total{process=`"$ProcLabel`",mode=`"read`"} $IoReadOps")
+    $Lines.Add("windows_process_io_operations_total{process=`"$ProcLabel`",mode=`"write`"} $IoWriteOps")
+    $Lines.Add("windows_process_io_operations_total{process=`"$ProcLabel`",mode=`"other`"} $IoOtherOps")
+    $Lines.Add("windows_process_page_faults_total{process=`"$ProcLabel`"} $PageFaults")
+    $Lines.Add("windows_process_page_file_bytes{process=`"$ProcLabel`"} $PageFile")
+    $Lines.Add("windows_process_pool_bytes{process=`"$ProcLabel`",pool=`"nonpaged`"} $PoolNonpaged")
+    $Lines.Add("windows_process_pool_bytes{process=`"$ProcLabel`",pool=`"paged`"} $PoolPaged")
+    $Lines.Add("windows_process_priority_base{process=`"$ProcLabel`"} $PriorityBase")
+    $Lines.Add("windows_process_private_bytes{process=`"$ProcLabel`"} $PrivateBytes")
+    $Lines.Add("windows_process_start_time{process=`"$ProcLabel`"} $UnixStart")
+    $Lines.Add("windows_process_threads{process=`"$ProcLabel`"} $Threads")
+    $Lines.Add("windows_process_virtual_bytes{process=`"$ProcLabel`"} $VirtualBytes")
+    $Lines.Add("windows_process_working_set_bytes{process=`"$ProcLabel`"} $WorkingSet")
+    $Lines.Add("windows_process_working_set_peak_bytes{process=`"$ProcLabel`"} $WsPeak")
+    $Lines.Add("windows_process_working_set_private_bytes{process=`"$ProcLabel`"} $WsPrivate")
+}
+
+[System.IO.File]::WriteAllLines($TempFile,$Lines, (New-Object System.Text.UTF8Encoding $false))
+Move-Item -Path $TempFile -Destination$OutFile -Force
+'@ | Set-Content -Path "$BaseDir\scripts\Export-SvchostMetrics.ps1" -Encoding UTF8
+
+# Run once immediately to generate windows_processes.prom
+& "$BaseDir\scripts\Export-SvchostMetrics.ps1"
 
 ####
 

@@ -260,4 +260,195 @@ prometheus.relabel "normalize_svchost" {
 }
 
 
+####
+// 1. Keep windows_exporter for OS, disk, network, and service states ("process" removed)
+prometheus.exporter.windows "default" {
+  enabled_collectors = ["cpu", "logical_disk", "net", "os", "service", "system"]
+}
+
+prometheus.scrape "windows" {
+  targets    = prometheus.exporter.windows.default.targets
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+// 2. Scrape Windows processes natively via OTel hostmetrics (including optional Windows counters)
+otelcol.receiver.hostmetrics "windows_processes" {
+  collection_interval = "60s"
+
+  scrapers {
+    processes {
+      mute_process_all_errors = true
+
+      metrics {
+        process.handles {
+          enabled = true
+        }
+        process.threads {
+          enabled = true
+        }
+        process.paging.faults {
+          enabled = true
+        }
+        process.disk.operations {
+          enabled = true
+        }
+      }
+    }
+  }
+
+  output {
+    metrics = [otelcol.processor.filter.drop_user_sessions.input]
+  }
+}
+
+// 3. Drop RDP/Interactive user sessions and Idle/System noise
+otelcol.processor.filter "drop_user_sessions" {
+  error_mode = "ignore"
+
+  metrics {
+    datapoint = [
+      "IsMatch(resource.attributes[\"process.executable.name\"], \"^(?i)(Idle|System|rdpclip\\\\.exe|explorer\\\\.exe|taskhostw\\\\.exe|sihost\\\\.exe|ctfmon\\\\.exe|dwm\\\\.exe|RuntimeBroker\\\\.exe|SearchHost\\\\.exe|StartMenuExperienceHost\\\\.exe)$\")",
+    ]
+  }
+
+  output {
+    metrics = [otelcol.processor.transform.resolve_names.input]
+  }
+}
+
+// 4. Step A of Transform: Resolve command_line to service/instance names & strip PIDs
+otelcol.processor.transform "resolve_names" {
+  error_mode = "ignore"
+
+  metric_statements {
+    context = "resource"
+    statements = [
+      // Default to executable name without .exe
+      "set(attributes[\"process\"], replace_pattern(attributes[\"process.executable.name\"], \"(?i)\\\\.exe$\", \"\"))",
+
+      // Resolve svchost: "-s <ServiceName>" (or fallback "-k <GroupName>")
+      "set(attributes[\"process\"], Concat([\"svchost\", ExtractPatterns(attributes[\"process.command_line\"], \"(?i)-k\\\\s+(?P<grp>[A-Za-z0-9_]+)\")[\"grp\"]], \"_\")) where IsMatch(attributes[\"process.executable.name\"], \"(?i)^svchost\") and IsMatch(attributes[\"process.command_line\"], \"(?i)-k\\\\s+[A-Za-z0-9_]+\")",
+      "set(attributes[\"process\"], Concat([\"svchost\", ExtractPatterns(attributes[\"process.command_line\"], \"(?i)-s\\\\s+(?P<svc>[A-Za-z0-9_-]+)\")[\"svc\"]], \"_\")) where IsMatch(attributes[\"process.executable.name\"], \"(?i)^svchost\") and IsMatch(attributes[\"process.command_line\"], \"(?i)-s\\\\s+[A-Za-z0-9_-]+\")",
+
+      // Resolve sqlservr: "-s<InstanceName>" or "-s <InstanceName>"
+      "set(attributes[\"process\"], Concat([\"sqlservr\", ExtractPatterns(attributes[\"process.command_line\"], \"(?i)-s\\\\s*(?P<inst>[A-Za-z0-9_\\\\$]+)\")[\"inst\"]], \"_\")) where IsMatch(attributes[\"process.executable.name\"], \"(?i)^sqlservr\") and IsMatch(attributes[\"process.command_line\"], \"(?i)-s\\\\s*[A-Za-z0-9_\\\\$]+\")",
+
+      // Resolve sqlagent: "-i <InstanceName>"
+      "set(attributes[\"process\"], Concat([\"sqlagent\", ExtractPatterns(attributes[\"process.command_line\"], \"(?i)-i\\\\s+(?P<inst>[A-Za-z0-9_\\\\$]+)\")[\"inst\"]], \"_\")) where IsMatch(attributes[\"process.executable.name\"], \"(?i)^sqlagent\") and IsMatch(attributes[\"process.command_line\"], \"(?i)-i\\\\s+[A-Za-z0-9_\\\\$]+\")",
+
+      // Sanitize any '$' in SQL instance names to '_'
+      "replace_pattern(attributes[\"process\"], \"\\\\$\", \"_\")",
+
+      // Strip all high-cardinality PID and command line resource attributes
+      "delete_key(attributes, \"process.pid\")",
+      "delete_key(attributes, \"process.parent_pid\")",
+      "delete_key(attributes, \"process.command_line\")",
+      "delete_key(attributes, \"process.executable.path\")",
+      "delete_key(attributes, \"process.executable.name\")",
+      "delete_key(attributes, \"process.owner\")",
+      "delete_key(attributes, \"process.creation.time\")",
+    ]
+  }
+
+  output {
+    metrics = [otelcol.processor.groupbyattrs.merge_by_process.input]
+  }
+}
+
+// 5. Merge separate process Resources that now share the same "process" name (e.g. 8 WmiPrvSE instances)
+otelcol.processor.groupbyattrs "merge_by_process" {
+  keys = ["process"]
+
+  output {
+    metrics = [otelcol.processor.transform.rename_to_windows_exporter.input]
+  }
+}
+
+// 6. Step B of Transform: Rename metrics/labels to windows_process_* and sum merged datapoints
+otelcol.processor.transform "rename_to_windows_exporter" {
+  error_mode = "ignore"
+
+  metric_statements {
+    context = "datapoint"
+    statements = [
+      // Copy resolved "process" name onto every metric datapoint
+      "set(attributes[\"process\"], resource.attributes[\"process\"])",
+
+      // Map CPU "state" -> "mode" (and rename "system" -> "privileged" to match windows_exporter)
+      "set(attributes[\"mode\"], \"privileged\") where attributes[\"state\"] == \"system\"",
+      "set(attributes[\"mode\"], \"user\") where attributes[\"state\"] == \"user\"",
+      "delete_key(attributes, \"state\")",
+
+      // Map Disk I/O "direction" -> "mode" ("read" / "write")
+      "set(attributes[\"mode\"], attributes[\"direction\"]) where attributes[\"direction\"] != nil",
+      "delete_key(attributes, \"direction\")",
+
+      // Clear page fault "type" ("major"/"minor") so total page faults sum cleanly into one series
+      "delete_key(attributes, \"type\")",
+    ]
+  }
+
+  metric_statements {
+    context = "metric"
+    statements = [
+      // Rename OTel process.* metrics to match windows_exporter names
+      // Clear unit on counters/gauges where windows_exporter omits unit suffixes or uses custom naming
+      "set(name, \"windows_process_cpu_time_total\") where name == \"process.cpu.time\"",
+      "set(unit, \"\") where name == \"windows_process_cpu_time_total\"",
+
+      "set(name, \"windows_process_working_set_bytes\") where name == \"process.memory.usage\"",
+      "set(unit, \"\") where name == \"windows_process_working_set_bytes\"",
+
+      "set(name, \"windows_process_virtual_bytes\") where name == \"process.memory.virtual\"",
+      "set(unit, \"\") where name == \"windows_process_virtual_bytes\"",
+
+      "set(name, \"windows_process_io_bytes_total\") where name == \"process.disk.io\"",
+      "set(unit, \"\") where name == \"windows_process_io_bytes_total\"",
+
+      "set(name, \"windows_process_io_operations_total\") where name == \"process.disk.operations\"",
+      "set(unit, \"\") where name == \"windows_process_io_operations_total\"",
+
+      "set(name, \"windows_process_handles\") where name == \"process.handles\"",
+      "set(unit, \"\") where name == \"windows_process_handles\"",
+
+      "set(name, \"windows_process_threads\") where name == \"process.threads\"",
+      "set(unit, \"\") where name == \"windows_process_threads\"",
+
+      "set(name, \"windows_process_page_faults_total\") where name == \"process.paging.faults\"",
+      "set(unit, \"\") where name == \"windows_process_page_faults_total\"",
+
+      // Finally, sum datapoints that share the same process & mode labels (collapses WmiPrvSE, conhost, dllhost)
+      "aggregate_metric_labels(\"sum\")",
+    ]
+  }
+
+  output {
+    metrics = [otelcol.processor.filter.drop_cpu_wait.input]
+  }
+}
+
+// 7. Drop CPU "wait" datapoints (OTel emits state="wait", which has no mode attribute after step 6)
+otelcol.processor.filter "drop_cpu_wait" {
+  error_mode = "ignore"
+
+  metrics {
+    datapoint = [
+      "metric.name == \"windows_process_cpu_time_total\" and attributes[\"mode\"] == nil",
+    ]
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+
+#####
+
+
+
 
